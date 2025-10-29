@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Payment Voucher API</title>
+</head>
+<body>
+    <h1>Test Payment Voucher API</h1>
+    <button onclick="testAPI()">Test Create Payment Voucher</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Sending request...';
+
+            const data = {
+                voucher_no: 'TEST' + Date.now(),
+                date: '2025-10-28',
+                payee: 'Test Payee',
+                payee_id: 3,
+                payment_method: 'โอนเงิน',
+                payment_date: '2025-10-28',
+                tax_type: 'excluding',
+                salesperson: 'Test',
+                withholding_tax_no: null,
+                withholding_tax_amount: 30,
+                items: [{
+                    id: '1',
+                    productId: 3,
+                    description: 'Test Product',
+                    amount: 100
+                }],
+                notes: '',
+                discount: 0,
+                vat_rate: 7,
+                subtotal: 100,
+                discount_amount: 0,
+                after_discount: 100,
+                vat: 7,
+                grand_total: 137,
+                amount: 137,
+                status: 'รอจ่าย'
+            };
+
+            try {
+                console.log('Sending data:', data);
+
+                const response = await fetch('http://127.0.0.1:8000/api/payment-vouchers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error response:', errorData);
+                    resultDiv.textContent = 'Error: ' + JSON.stringify(errorData, null, 2);
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('Success:', result);
+                resultDiv.textContent = 'Success!\n' + JSON.stringify(result, null, 2);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultDiv.textContent = 'Fetch Error: ' + error.message + '\n\nCheck console for details.';
+            }
+        }
+    </script>
+</body>
+</html>

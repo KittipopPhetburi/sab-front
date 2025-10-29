@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@100;200;300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🌈 โทนหลักของระบบ */
+:root {
+  --font-size: 16px;
+  --background: #f8fafc; /* สีพื้นหลังเทาอ่อนของระบบ */
+  --foreground: #111111;
+  --primary: #0f172a;
+  --border: #e5e7eb;
+  --radius: 0.75rem;
+
+  --card: #ffffff;
+  --card-foreground: #111111;
+
+  --input: #ffffff;
+  --input-background: #ffffff;
+  --muted-foreground: #6b7280;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Anuphan', sans-serif;
+}
+
+/* 🌙 Dark Mode */
+.dark {
+  --background: #111827;
+  --foreground: #f9fafb;
+  --card: #1f2937;
+  --card-foreground: #f9fafb;
+  --input: #374151;
+  --input-background: #374151;
+  --border: #4b5563;
+}
+
+/* 🧱 ตัวอักษรพื้นฐาน */
+@layer base {
+  * {
+    @apply outline-none;
+    font-family: 'Anuphan', sans-serif;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Anuphan', sans-serif;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.4;
+  }
+}
+
+/* 🪟 Card / Panel / Container */
+.card,
+div[class*="Card"],
+div[class*="Panel"],
+div[class*="Box"],
+div[class*="Container"] {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ✍️ Input / Select / Textarea */
+input,
+select,
+textarea {
+  background-color: var(--input-background) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 1rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #2563eb !important; /* ฟ้าเหมือนใน Figma */
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* 🧾 Dropdown / Popover / Menu */
+[role="listbox"],
+[role="dialog"],
+[role="menu"],
+div[data-radix-popper-content-wrapper],
+div[class*="popover"],
+div[class*="dropdown"] {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* 🔘 ปุ่ม */
+button {
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+button:hover {
+  opacity: 0.95;
+}
+
+/* 🧍 Sidebar */
+.sidebar,
+div[class*="Sidebar"] {
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* 📊 ตาราง */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+/* 🌫 เงาและมุมโค้งให้เหมือน Figma ทุกหน้า */
+.shadow-soft {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.rounded-card {
+  border-radius: 0.75rem;
+}
