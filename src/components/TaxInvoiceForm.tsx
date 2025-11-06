@@ -148,6 +148,7 @@ export default function TaxInvoiceForm({
       if (editData.discount !== undefined) setDiscount(editData.discount);
       if (editData.vat_rate !== undefined) setVatRate(editData.vat_rate);
       if (editData.reference_doc) setSelectedDocument(editData.reference_doc);
+      if (editData.seller_name) setSalesperson(editData.seller_name); // โหลดชื่อผู้ขาย
 
       // โหลด items
       if (editData.items) {
@@ -270,6 +271,7 @@ export default function TaxInvoiceForm({
         reference_doc: selectedDocument,
         shipping_address: shippingAddress,
         shipping_phone: shippingPhone,
+        seller_name: salesperson, // เพิ่มชื่อผู้ขาย
         items: JSON.stringify(items), // แปลงเป็น JSON string
         notes,
         discount,
@@ -296,6 +298,7 @@ export default function TaxInvoiceForm({
         reference_doc: selectedDocument,
         shipping_address: shippingAddress,
         shipping_phone: shippingPhone,
+        seller_name: salesperson, // เพิ่มชื่อผู้ขาย
         items: JSON.stringify(items), // แปลงเป็น JSON string
         notes,
         discount,
@@ -418,13 +421,13 @@ export default function TaxInvoiceForm({
               <Input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>แท้น</Label>
-              <Select defaultValue="แท้น">
+              <Label>ต้นฉบับ</Label>
+              <Select defaultValue="ต้นฉบับ">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="แท้น">แท้น</SelectItem>
+                  <SelectItem value="ต้นฉบับ">ต้นฉบับ</SelectItem>
                   <SelectItem value="สำเนา">สำเนา</SelectItem>
                 </SelectContent>
               </Select>

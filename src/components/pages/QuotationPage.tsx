@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import type { UserRole } from '../../types';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import type { UserRole } from "../../types";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import {
   Table,
   TableBody,
@@ -10,23 +10,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Trash2, Eye, Search, Printer, FileText, Clock, CheckCircle2, XCircle, ChevronDown } from 'lucide-react';
-import { Badge } from '../ui/badge';
+} from "../ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Plus,
+  Trash2,
+  Eye,
+  Search,
+  Printer,
+  FileText,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+} from "lucide-react";
+import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+} from "../ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from "../ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,10 +47,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { Label } from '../ui/label';
-import { toast } from 'sonner';
-import TaxInvoiceForm from '../TaxInvoiceForm';
+} from "../ui/alert-dialog";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
+import TaxInvoiceForm from "../TaxInvoiceForm";
 
 interface QuotationPageProps {
   userRole: UserRole;
@@ -59,11 +70,15 @@ interface Quotation {
   reference_doc?: string;
   shipping_address?: string;
   shipping_phone?: string;
+  seller_name?: string; // เพิ่มชื่อผู้ขาย
   items?: Array<{
     id: string;
     description: string;
     amount: number;
     productId?: number;
+    qty?: number; // จำนวน
+    unit?: string; // หน่วย
+    price?: number; // ราคาต่อหน่วย
   }>;
   notes?: string;
   discount?: number;
@@ -74,7 +89,7 @@ interface Quotation {
   vat?: number;
   grand_total?: number;
   amount?: number;
-  status: 'ร่าง' | 'รออนุมัติ' | 'อนุมัติแล้ว' | 'ยกเลิก';
+  status: "ร่าง" | "รออนุมัติ" | "อนุมัติแล้ว" | "ยกเลิก";
   description?: string;
   valid_until?: string;
   created_at?: string;
@@ -82,17 +97,17 @@ interface Quotation {
 }
 
 export default function QuotationPage({ userRole }: QuotationPageProps) {
-  const API_URL = 'http://127.0.0.1:8000/api/quotations';
+  const API_URL = "http://127.0.0.1:8000/api/quotations";
   const [data, setData] = useState<Quotation[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showQuotationForm, setShowQuotationForm] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Quotation | null>(null);
 
-  const canEdit = userRole === 'admin' || userRole === 'account';
-  const canDelete = userRole === 'admin' || userRole === 'account';
+  const canEdit = userRole === "admin" || userRole === "account";
+  const canDelete = userRole === "admin" || userRole === "account";
 
   // Fetch data from API
   useEffect(() => {
@@ -104,17 +119,17 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       const response = await axios.get(API_URL);
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching quotations:', error);
-      toast.error('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+      console.error("Error fetching quotations:", error);
+      toast.error("เกิดข้อผิดพลาดในการโหลดข้อมูล");
     }
   };
 
   // Calculate status counts
   const statusCounts = {
-    ร่าง: data.filter((item) => item.status === 'ร่าง').length,
-    รออนุมัติ: data.filter((item) => item.status === 'รออนุมัติ').length,
-    อนุมัติแล้ว: data.filter((item) => item.status === 'อนุมัติแล้ว').length,
-    ยกเลิก: data.filter((item) => item.status === 'ยกเลิก').length,
+    ร่าง: data.filter((item) => item.status === "ร่าง").length,
+    รออนุมัติ: data.filter((item) => item.status === "รออนุมัติ").length,
+    อนุมัติแล้ว: data.filter((item) => item.status === "อนุมัติแล้ว").length,
+    ยกเลิก: data.filter((item) => item.status === "ยกเลิก").length,
   };
 
   const handleSaveQuotation = () => {
@@ -128,13 +143,13 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
     setIsViewDialogOpen(true);
   };
   const handleEdit = (item: Quotation) => {
-  setSelectedItem(item);
-  setShowQuotationForm(true);
-};
+    setSelectedItem(item);
+    setShowQuotationForm(true);
+  };
 
   const handleDeleteClick = (item: Quotation) => {
     if (!canDelete) {
-      toast.error('คุณไม่มีสิทธิ์ลบข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์ลบข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -151,14 +166,19 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       setSelectedItem(null);
       fetchQuotations();
     } catch (error: any) {
-      console.error('Error deleting quotation:', error);
-      toast.error(error.response?.data?.message || 'เกิดข้อผิดพลาดในการลบใบเสนอราคา');
+      console.error("Error deleting quotation:", error);
+      toast.error(
+        error.response?.data?.message || "เกิดข้อผิดพลาดในการลบใบเสนอราคา"
+      );
     }
   };
 
-  const handleStatusChange = async (item: Quotation, newStatus: 'ร่าง' | 'รออนุมัติ' | 'อนุมัติแล้ว' | 'ยกเลิก') => {
+  const handleStatusChange = async (
+    item: Quotation,
+    newStatus: "ร่าง" | "รออนุมัติ" | "อนุมัติแล้ว" | "ยกเลิก"
+  ) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์เปลี่ยนสถานะ');
+      toast.error("คุณไม่มีสิทธิ์เปลี่ยนสถานะ");
       return;
     }
 
@@ -168,17 +188,22 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       toast.success(`เปลี่ยนสถานะเป็น "${newStatus}" สำเร็จ`);
       fetchQuotations();
     } catch (error: any) {
-      console.error('Error changing status:', error);
-      toast.error(error.response?.data?.message || 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ');
+      console.error("Error changing status:", error);
+      toast.error(
+        error.response?.data?.message || "เกิดข้อผิดพลาดในการเปลี่ยนสถานะ"
+      );
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      'ร่าง': 'outline',
-      'รออนุมัติ': 'secondary',
-      'อนุมัติแล้ว': 'default',
-      'ยกเลิก': 'destructive',
+    const variants: Record<
+      string,
+      "default" | "secondary" | "destructive" | "outline"
+    > = {
+      ร่าง: "outline",
+      รออนุมัติ: "secondary",
+      อนุมัติแล้ว: "default",
+      ยกเลิก: "destructive",
     };
     return <Badge variant={variants[status]}>{status}</Badge>;
   };
@@ -186,8 +211,11 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
   const filteredData = data.filter((item) => {
     const matchesSearch =
       item.quotation_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.customer_name || item.customer || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
+      (item.customer_name || item.customer || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" || item.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -202,22 +230,24 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       />
     );
   }
+  const logoUrl = `${window.location.origin}/logo.png`; // ชี้ไป public/logo.png
+  const contactImgUrl = `${window.location.origin}/contact.png`;
 
   const handlePrint = (item: Quotation) => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    toast.error('กรุณาอนุญาตให้เปิดหน้าต่างใหม่');
-    return;
-  }
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("กรุณาอนุญาตให้เปิดหน้าต่างใหม่");
+      return;
+    }
 
-  // ป้องกัน error: แปลงค่าตัวเลขทั้งหมดให้แน่ใจว่าเป็น number
-  const subtotal = parseFloat(item.subtotal || 0);
-  const discount_amount = parseFloat(item.discount_amount || 0);
-  const after_discount = parseFloat(item.after_discount || 0);
-  const vat = parseFloat(item.vat || 0);
-  const grand_total = parseFloat(item.grand_total || 0);
+    // ป้องกัน error: แปลงค่าตัวเลขทั้งหมดให้แน่ใจว่าเป็น number
+    const subtotal = Number(item.subtotal || 0);
+    const discount_amount = Number(item.discount_amount || 0);
+    const after_discount = Number(item.after_discount || 0);
+    const vat = Number(item.vat || 0);
+    const grand_total = Number(item.grand_total || 0);
 
-  const htmlContent = `
+    const htmlContent = `
   <!DOCTYPE html>
   <html lang="th">
   <head>
@@ -225,16 +255,127 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
     <title>ใบเสนอราคา ${item.quotation_number}</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600;700&display=swap');
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        background-color: #f0f0f0;
+      }
+
       body {
         font-family: 'Anuphan', sans-serif;
         font-size: 14px;
         color: #000;
-        margin: 25px 40px;
       }
+
+      .page-container {
+        position: relative;
+        width: 210mm;
+        height: 297mm;
+        padding: 15mm 15mm;
+        margin: 20px auto;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+
+      /* แถบสีน้ำเงินด้านขวา */
+      .page-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 32px;
+        height: 262px;
+        background: #285c91;
+        z-index: 10;
+      }
+
+      @media print {
+        html, body {
+          background-color: white;
+          display: block;
+        }
+        .page-container {
+          width: 210mm;
+          height: 297mm;
+          padding: 15mm 15mm;
+          margin: 0;
+          box-shadow: none;
+        }
+        .page-container::before {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
       }
+
+    ////
+    table.header {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table.header td {
+    padding: 2px;
+    vertical-align: top;
+  }
+.header-right-cell {
+  padding-left: 0;
+}
+  /* ช่องขวาทั้งก้อน */
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;    /* ชิดขวา */
+    margin-right: 70px;
+    gap: 8px;
+  }
+
+  .doc-title {
+    font-size: 18px;
+    font-weight: 700;
+    
+  }
+
+  /* แบ่งด้านในเป็น 2 ช่อง: ข้อความ + รูป */
+  .header-right-inner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  .contact-info {
+    text-align: left !important;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .contact-img img {
+    width: 70px;           /* ปรับขนาดรูปตามต้องการ */
+    height: 70px;
+    object-fit: contain;
+  }
+    /////
+
+
       th, td {
         border: 1.2px solid #000;
         padding: 6px 8px;
@@ -250,36 +391,83 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
 
       .header td { border: none; vertical-align: top; }
       .company-name {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
-        color: #007bff;
+        color: #000;
       }
       .doc-title {
         text-align: right;
         font-weight: 700;
-        color: #007bff;
-        font-size: 22px;
+        margin-top: 45px;
+        color: #578fc5;
+        font-size: 28px;
       }
-      .doc-sub {
-        color: #007bff;
-        font-size: 14px;
+      .doc-title2 {
+        font-weight: 700;
+        color: #0d0d0d;
+        font-size: 28px;
       }
 
       .info {
         border: 1.2px solid #000;
         margin-top: 5px;
         font-size: 14px;
+
       }
       .info td { padding: 6px 8px; vertical-align: top; }
 
-      .items th, .items td {
-        border: 1.2px solid #000;
-        line-height: 1.3;
+      .info-right { 
+      border: 1.2px solid #000;
+      margin-top: 5px;
+      font-size: 14px;
       }
 
+      .items {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+      }
+
+      .items thead th {
+        border: 1px solid #000;
+        padding: 8px 5px;
+        background-color: #f2f2f2;
+        text-align: center;
+        font-weight: bold;
+        height: 30px;
+      }
+
+      .items tbody tr.item-row td {
+        border-left: 0.5px solid #000;
+        border-right: 0.5px solid #000;
+        padding: 6px 10px;
+        vertical-align: top;
+      }
+
+      .items tbody tr.spacer-row td {
+        border-left: 0.5px solid #000;
+        border-right: 0.5px solid #000;
+        height: 320px;
+        padding: 0;
+      }
+
+      .items tbody tr td[colspan="6"] {
+        font-style: italic;
+        color: #666;
+        padding: 20px 0;
+        text-align: center;
+      }
+
+
+      .summary-footer td {
+        border: 1.2px;
+        padding: 6px 8px;
+        border: 1.2px solid #000;
+      }
       .summary {
         width: 45%;
-        float: right;
+        float: left;
         border-collapse: collapse;
         margin-top: 6px;
       }
@@ -309,104 +497,166 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
     </style>
   </head>
   <body>
-    <table class="header">
-      <tr>
-        <td>
-          <div class="company-name">บริษัท ไอ ที บี ที คอร์ปอเรชั่น จำกัด (สำนักงานใหญ่)</div>
-          170/273 หมู่ที่ 1 ตำบลบางรักพัฒนา อำเภอบางบัวทอง จังหวัดนนทบุรี 12000<br/>
-          โทร. 02-1014461 อีเมล: service@itbtthai.com<br/>
-          เลขประจำตัวผู้เสียภาษี 0135561023453
-        </td>
-        <td class="doc-title">
-          ใบเสนอราคา<br/>
-          <span class="doc-sub">Quotation</span>
-        </td>
-      </tr>
-    </table>
+  <div class="page-container">
+
+   <table class="header">
+  <tr>
+    <td>
+      <!-- ฝั่งซ้ายตามเดิม -->
+      <img src="${logoUrl}" alt="Logo" style="height:60px; margin-bottom:6px;" />
+      <div class="company-name">บริษัท ไอ ที บี ที คอร์ปอเรชั่น จำกัด (สำนักงานใหญ่)</div>
+      170/372 หมู่ที่ 1 ตำบลบางคูวัต อำเภอเมืองปทุมธานี จังหวัดปทุมธานี 12000<br/>
+      เลขประจำตัวผู้เสียภาษี 0135561023453 <br/> 
+      โทร : 02-1014461 Email : service@itbtthai.com
+    </td>
+
+    <td class="header-right-cell">
+  <div class="header-right">
+    <div class="doc-title">ใบเสนอราคา <br/>  
+    <dix class="doc-title2">Quotation</div>
+  </div>
+  </td>
+  
+  </tr>
+  </table>
 
     <table class="info">
       <tr>
-        <td style="width:50%">
-          ลูกค้า: ${item.customer_name || '-'}<br/>
-          ที่อยู่: ${item.customer_address || '-'}<br/>
-          โทร: ${item.customer_phone || '-'}<br/>
-          อีเมล: ${item.customer_email || '-'}<br/>
-          เลขประจำตัวผู้เสียภาษี: ${item.customer_tax_id || '-'}
-        </td>
-        <td style="width:50%">
-          เลขที่: ${item.quotation_number}<br/>
-          วันที่: ${new Date(item.date).toLocaleDateString('th-TH')}<br/>
-          สถานะ: ${item.status || '-'}<br/>
-          ผู้ขาย: ${item.seller_name || '-'}
+        <td style="width:72%">
+          <b>ลูกค้า :</b> ${item.customer_name || "-"}<br/>
+          <b>ที่อยู่ :</b> ${item.customer_address || "-"}<br/>
+          <b>โทร :</b> ${item.customer_phone || "-"} <b>อีเมล :</b> ${
+      item.customer_email || "-"
+    }<br/>
+          <b>เลขประจำตัวผู้เสียภาษี :</b> ${item.customer_tax_id || "-"}
+        </td>        
+        <td style="width:28 %" class="info-right">
+          <b>เลขที่ :</b> ${item.quotation_number}<br/>
+          <b>วันที่ :</b> ${new Date(item.date).toLocaleDateString(
+            "th-TH"
+          )}<br/>
+          <b>ยืนราคา :</b> ${item.status || "-"}<br/>
+          <b>ผู้ขาย :</b> ${item.seller_name || "-"}
         </td>
       </tr>
     </table>
 
-    <table class="items" style="margin-top:5px;">
+    <table class="items" style="margin-top:10px;">
       <thead>
         <tr>
           <th style="width:40px;">ที่</th>
           <th>รายละเอียด</th>
-          <th style="width:70px;">จำนวน</th>
-          <th style="width:70px;">หน่วย</th>
-          <th style="width:100px;">ราคาต่อหน่วย(บาท)</th>
-          <th style="width:100px;">ยอดรวม(บาท)</th>
+          <th style="width:50px;">จำนวน</th>
+          <th style="width:50px;">หน่วย</th>
+          <th style="width:160px;">ราคาต่อหน่วย(บาท)</th>
+          <th style="width:80px;">ยอดรวม(บาท)</th>
         </tr>
       </thead>
       <tbody>
         ${
-          (item.items && item.items.length > 0)
-            ? item.items.map((i, idx) => `
-              <tr>
+          item.items && item.items.length > 0
+            ? item.items
+                .map(
+                  (i, idx) => `
+              <tr class="item-row">
                 <td class="text-center">${idx + 1}</td>
-                <td>${i.description || '-'}</td>
+                <td>${i.description || "-"}</td>
                 <td class="text-center">${i.qty || 1}</td>
-                <td class="text-center">${i.unit || '-'}</td>
-                <td class="text-right">${Number(i.price || 0).toLocaleString()}</td>
-                <td class="text-right">${Number(i.amount || 0).toLocaleString()}</td>
-              </tr>`).join('')
-            : `<tr><td colspan="6" class="text-center">- ไม่มีรายการสินค้า -</td></tr>`
+                <td class="text-center">${i.unit || "-"}</td>
+                <td class="text-right">${Number(
+                  i.price || 0
+                ).toLocaleString()}</td>
+                <td class="text-right">${Number(
+                  i.amount || 0
+                ).toLocaleString()}</td>
+              </tr>`
+                )
+                .join("")
+            : `<tr class="item-row"><td colspan="6" style="text-align: center;">- ไม่มีรายการสินค้า -</td></tr>`
         }
+        <tr class="spacer-row">
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
       </tbody>
-    </table>
+<tfoot class="summary-footer">
+        <tr>
+            <td colspan="3" style="text-align: left; border-right: none;"> 
+                <b>หมายเหตุ :</b>
+            </td>
+    
+            <td colspan="2" style="text-align: right; padding-right: 5px;">
+                รวมเป็นเงิน<br/>
+                ส่วนลด<br/>
+                ราคาหลังหักส่วนลด<br/>
+                ภาษีมูลค่าเพิ่ม VAT 7%
+            </td>
+            <td colspan="1" style="text-align: right; padding-right: 5px;">
+            <b> ${subtotal.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })} </b><br/>
+            <b> ${discount_amount.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })} </b><br/>
+            <b> ${after_discount.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })} </b><br/>
+            <b> ${vat.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })} </b><br/>
+                
+            </td>
+        </tr>
+    
+        <tr>
+            <td colspan="3" style="text-align: left;">
+                <b>จำนวนเงินเป็นตัวอักษร (..................................................)</b>
+            </td>
+    
+            <td colspan="2" style="text-align: right; padding-right: 5px;">
+                <b>จำนวนเงินรวมทั้งสิ้น</b>
+            </td>
+            <td colspan="1" style="text-align: right; padding-right: 5px;">
+            <b> ${grand_total.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })} </b>
 
-    <table class="summary">
-      <tr><td class="label">รวมเป็นเงิน</td><td class="value">${subtotal.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      <tr><td class="label">ส่วนลด</td><td class="value">${discount_amount.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      <tr><td class="label">ราคาหลังหักส่วนลด</td><td class="value">${after_discount.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      <tr><td class="label">ภาษีมูลค่าเพิ่ม 7%</td><td class="value">${vat.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-      <tr><td class="label"><strong>จำนวนเงินรวมทั้งสิ้น</strong></td><td class="value"><strong>${grand_total.toLocaleString(undefined,{minimumFractionDigits:2})}</strong></td></tr>
-    </table>
-
+            </td>
+        </tr>
+    </tfoot>
+</table>
     <div style="clear:both;"></div>
-
-    <div class="note">
-      <strong>หมายเหตุ:</strong><br/>
-      1. การชำระเงินภายใน 7 วันหลังได้รับสินค้า<br/>
-      2. การส่งมอบสินค้าสามารถเปลี่ยนแปลงได้ตามความพร้อมของบริษัท<br/>
-      3. ราคานี้ยังไม่รวมค่าขนส่ง (ถ้ามี)
-    </div>
-
-    <table class="footer">
-      <tr>
-        <td colspan="3" style="text-align:left;">จำนวนเงินเป็นตัวอักษร (.............................................................)</td>
-      </tr>
-      <tr class="sig-space">
-        <td>ลงชื่อ..........................................<br/>อนุมัติสั่งซื้อ<br/>(..........................................)</td>
-        <td>ตราประทับ<br/>(ถ้ามี)</td>
-        <td>ลงชื่อ..........................................<br/>ผู้เสนอราคา<br/>(..........................................)</td>
-      </tr>
-    </table>
+<table class="footer" style="width: 100%;">
+    <tbody>
+        <tr class="sig-row">
+            <td style="width: 50%; text-align: left; padding-left: 20px;">
+                ลงชื่อ..........................................อนุมัติสั่งซื้อ<br/>
+                (..................................................)<br/>
+                วันที่อนุมัติ......./................./...........
+            </td>
+            
+            <td style="width: 50%; text-align: right; padding-right: 20px;">
+                ลงชื่อ..........................................ผู้เสนอราคา<br/>
+                (..................................................)<br/>
+                วันที่เสนอราคา......./................./........... 
+                </td>
+        </tr>
+    </tbody>
+</table>
+  </div>
   </body>
   </html>
   `;
 
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
-  printWindow.onload = () => printWindow.print();
-  toast.success(`เตรียมพิมพ์ ${item.quotation_number}`);
-};
-
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.onload = () => printWindow.print();
+    toast.success(`เตรียมพิมพ์ ${item.quotation_number}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -414,7 +664,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card
           className="bg-gradient-to-br from-cyan-400 to-cyan-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('ร่าง')}
+          onClick={() => setFilterStatus("ร่าง")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -431,7 +681,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
 
         <Card
           className="bg-gradient-to-br from-orange-400 to-orange-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('รออนุมัติ')}
+          onClick={() => setFilterStatus("รออนุมัติ")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -448,7 +698,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
 
         <Card
           className="bg-gradient-to-br from-green-400 to-green-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('อนุมัติแล้ว')}
+          onClick={() => setFilterStatus("อนุมัติแล้ว")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -465,7 +715,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
 
         <Card
           className="bg-gradient-to-br from-slate-400 to-slate-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('ยกเลิก')}
+          onClick={() => setFilterStatus("ยกเลิก")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -487,13 +737,13 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>รายการใบเสนอราคา</CardTitle>
-              {filterStatus !== 'all' && (
+              {filterStatus !== "all" && (
                 <p className="text-sm text-gray-500 mt-1">
-                  กรองตาม: {filterStatus}{' '}
+                  กรองตาม: {filterStatus}{" "}
                   <Button
                     variant="link"
                     className="p-0 h-auto text-sm"
-                    onClick={() => setFilterStatus('all')}
+                    onClick={() => setFilterStatus("all")}
                   >
                     แสดงทั้งหมด
                   </Button>
@@ -534,8 +784,12 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
               {filteredData.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.quotation_number}</TableCell>
-                  <TableCell>{new Date(item.date).toLocaleDateString('th-TH')}</TableCell>
-                  <TableCell>{item.customer_name || item.customer || '-'}</TableCell>
+                  <TableCell>
+                    {new Date(item.date).toLocaleDateString("th-TH")}
+                  </TableCell>
+                  <TableCell>
+                    {item.customer_name || item.customer || "-"}
+                  </TableCell>
                   <TableCell className="text-right">
                     ฿{(item.grand_total || item.amount || 0).toLocaleString()}
                   </TableCell>
@@ -553,19 +807,29 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleStatusChange(item, 'ร่าง')}>
+                        <DropdownMenuItem
+                          onClick={() => handleStatusChange(item, "ร่าง")}
+                        >
                           <FileText className="w-4 h-4 mr-2" />
                           ร่าง
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(item, 'รออนุมัติ')}>
+                        <DropdownMenuItem
+                          onClick={() => handleStatusChange(item, "รออนุมัติ")}
+                        >
                           <Clock className="w-4 h-4 mr-2" />
                           รออนุมัติ
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(item, 'อนุมัติแล้ว')}>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleStatusChange(item, "อนุมัติแล้ว")
+                          }
+                        >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
                           อนุมัติแล้ว
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(item, 'ยกเลิก')}>
+                        <DropdownMenuItem
+                          onClick={() => handleStatusChange(item, "ยกเลิก")}
+                        >
                           <XCircle className="w-4 h-4 mr-2" />
                           ยกเลิก
                         </DropdownMenuItem>
@@ -574,19 +838,27 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleView(item)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(item)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
-  variant="ghost"
-  size="icon"
-  onClick={() => handleEdit(item)}
-  disabled={!canEdit}
->
-  <FileText className="w-4 h-4" />
-</Button>
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(item)}
+                        disabled={!canEdit}
+                      >
+                        <FileText className="w-4 h-4" />
+                      </Button>
 
-                      <Button variant="ghost" size="icon" onClick={() => handlePrint(item)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handlePrint(item)}
+                      >
                         <Printer className="w-4 h-4" />
                       </Button>
                       <Button
@@ -611,7 +883,9 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>รายละเอียดใบเสนอราคา</DialogTitle>
-            <DialogDescription>เลขที่ {selectedItem?.quotation_number}</DialogDescription>
+            <DialogDescription>
+              เลขที่ {selectedItem?.quotation_number}
+            </DialogDescription>
           </DialogHeader>
           {selectedItem && (
             <div className="space-y-4">
@@ -622,28 +896,45 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                 </div>
                 <div>
                   <Label className="text-gray-500">วันที่</Label>
-                  <p className="mt-1">{new Date(selectedItem.date).toLocaleDateString('th-TH')}</p>
+                  <p className="mt-1">
+                    {new Date(selectedItem.date).toLocaleDateString("th-TH")}
+                  </p>
                 </div>
               </div>
               <div>
                 <Label className="text-gray-500">ลูกค้า</Label>
-                <p className="mt-1">{selectedItem.customer_name || selectedItem.customer || '-'}</p>
+                <p className="mt-1">
+                  {selectedItem.customer_name || selectedItem.customer || "-"}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-500">จำนวนเงิน</Label>
-                  <p className="mt-1">฿{(selectedItem.grand_total || selectedItem.amount || 0).toLocaleString()}</p>
+                  <p className="mt-1">
+                    ฿
+                    {(
+                      selectedItem.grand_total ||
+                      selectedItem.amount ||
+                      0
+                    ).toLocaleString()}
+                  </p>
                 </div>
                 {selectedItem.valid_until && (
                   <div>
                     <Label className="text-gray-500">ใช้ได้ถึงวันที่</Label>
-                    <p className="mt-1">{new Date(selectedItem.valid_until).toLocaleDateString('th-TH')}</p>
+                    <p className="mt-1">
+                      {new Date(selectedItem.valid_until).toLocaleDateString(
+                        "th-TH"
+                      )}
+                    </p>
                   </div>
                 )}
               </div>
               <div>
                 <Label className="text-gray-500">สถานะ</Label>
-                <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                <div className="mt-1">
+                  {getStatusBadge(selectedItem.status)}
+                </div>
               </div>
               {selectedItem.description && (
                 <div>
@@ -660,18 +951,24 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบใบเสนอราคา {selectedItem?.quotation_number}?
+              คุณแน่ใจหรือไม่ว่าต้องการลบใบเสนอราคา{" "}
+              {selectedItem?.quotation_number}?
               การดำเนินการนี้ไม่สามารถยกเลิกได้
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>ลบ</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              ลบ
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
