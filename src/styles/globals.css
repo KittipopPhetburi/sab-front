@@ -134,6 +134,37 @@ div[class*="Sidebar"] {
   border-right: 1px solid #e5e7eb;
 }
 
+/* Custom scrollbar for sidebar scroll area */
+[data-slot="scroll-area"] {
+  /* allow scrollbar to be visible on both WebKit and Firefox */
+  -ms-overflow-style: auto; /* for IE 10+ */
+  scrollbar-width: thin; /* for Firefox */
+}
+
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.12);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+[data-slot="scroll-area-viewport"]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,0.18);
+}
+
+/* For dashboards with a snug sidebar, ensure all viewport children are constrained */
+[data-slot="scroll-area"] {
+  height: 100%;
+}
+
 /* 📊 ตาราง */
 table {
   border-collapse: collapse;

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { UserRole } from '../../types';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import { useState, useEffect } from "react";
+import type { UserRole } from "../../types";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import {
   Table,
   TableBody,
@@ -10,23 +10,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Edit, Trash2, Eye, Search, Briefcase, Clock, CheckCircle, XCircle, Shield } from 'lucide-react';
-import { Badge } from '../ui/badge';
+} from "../ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Search,
+  Briefcase,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Shield,
+} from "lucide-react";
+import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+} from "../ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from "../ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,13 +47,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { Label } from '../ui/label';
-import { toast } from 'sonner';
-import { customerService } from '../../services/customerService';
-import type { Customer } from '../../services/customerService';
-import { projectService } from '../../services/projectService';
-import type { Project as ApiProject } from '../../services/projectService';
+} from "../ui/alert-dialog";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
+import { customerService } from "../../services/customerService";
+import type { Customer } from "../../services/customerService";
+import { projectService } from "../../services/projectService";
+import type { Project as ApiProject } from "../../services/projectService";
 
 interface ProjectPageProps {
   userRole: UserRole;
@@ -50,30 +61,33 @@ interface ProjectPageProps {
 
 export default function ProjectPage({ userRole }: ProjectPageProps) {
   const [data, setData] = useState<ApiProject[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isCustomerSelectDialogOpen, setIsCustomerSelectDialogOpen] = useState(false);
+  const [isCustomerSelectDialogOpen, setIsCustomerSelectDialogOpen] =
+    useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<ApiProject | null>(null);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(
+    null
+  );
   const [formData, setFormData] = useState({
-    code: '',
-    customerName: '',
-    projectName: '',
+    code: "",
+    customerName: "",
+    projectName: "",
     amount: 0,
     installments: 0,
     guarantee: 0,
-    startDate: '',
-    endDate: '',
-    description: '',
+    startDate: "",
+    endDate: "",
+    description: "",
   });
 
-  const canEdit = userRole === 'admin' || userRole === 'account';
-  const canDelete = userRole === 'admin';
+  const canEdit = userRole === "admin" || userRole === "account";
+  const canDelete = userRole === "admin";
 
   // โหลดข้อมูลโครงการจากฐานข้อมูล
   useEffect(() => {
@@ -82,8 +96,8 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
         const projects = await projectService.getAll();
         setData(projects);
       } catch (error) {
-        console.error('Error loading projects:', error);
-        toast.error('ไม่สามารถโหลดข้อมูลโครงการได้');
+        console.error("Error loading projects:", error);
+        toast.error("ไม่สามารถโหลดข้อมูลโครงการได้");
       }
     };
     loadProjects();
@@ -95,8 +109,8 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       const projects = await projectService.getAll();
       setData(projects);
     } catch (error) {
-      console.error('Error loading projects:', error);
-      toast.error('ไม่สามารถโหลดข้อมูลโครงการได้');
+      console.error("Error loading projects:", error);
+      toast.error("ไม่สามารถโหลดข้อมูลโครงการได้");
     }
   };
 
@@ -107,7 +121,7 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
         const customerList = await customerService.getActiveCustomers();
         setCustomers(customerList);
       } catch (error) {
-        console.error('Error loading customers:', error);
+        console.error("Error loading customers:", error);
       }
     };
     loadCustomers();
@@ -122,8 +136,15 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
   const handleAdd = async () => {
     try {
       // Validate required fields
-      if (!formData.code || !selectedCustomerId || !formData.projectName || formData.amount <= 0 || formData.installments <= 0 || !formData.startDate) {
-        toast.error('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+      if (
+        !formData.code ||
+        !selectedCustomerId ||
+        !formData.projectName ||
+        formData.amount <= 0 ||
+        formData.installments <= 0 ||
+        !formData.startDate
+      ) {
+        toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
         return;
       }
 
@@ -138,7 +159,7 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
         start_date: formData.startDate,
         end_date: formData.endDate || undefined,
         description: formData.description || undefined,
-        status: 'กำลังดำเนินงาน',
+        status: "กำลังดำเนินงาน",
       };
 
       // Call API to create project
@@ -149,30 +170,32 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
 
       // Reset form and close dialog
       setFormData({
-        code: '',
-        customerName: '',
-        projectName: '',
+        code: "",
+        customerName: "",
+        projectName: "",
         amount: 0,
         installments: 0,
         guarantee: 0,
-        startDate: '',
-        endDate: '',
-        description: '',
+        startDate: "",
+        endDate: "",
+        description: "",
       });
       setSelectedCustomerId(null);
       setIsAddDialogOpen(false);
 
-      toast.success('เพิ่มโครงการสำเร็จ');
+      toast.success("เพิ่มโครงการสำเร็จ");
     } catch (error) {
-      console.error('Error creating project:', error);
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'ไม่สามารถเพิ่มโครงการได้';
+      console.error("Error creating project:", error);
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "ไม่สามารถเพิ่มโครงการได้";
       toast.error(errorMessage);
     }
   };
 
   const handleEdit = (item: ApiProject) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์แก้ไขข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์แก้ไขข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -185,8 +208,8 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       installments: item.installments,
       guarantee: item.guarantee,
       startDate: item.start_date,
-      endDate: item.end_date || '',
-      description: item.description || '',
+      endDate: item.end_date || "",
+      description: item.description || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -196,8 +219,15 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       if (!selectedItem) return;
 
       // Validate required fields
-      if (!formData.code || !selectedCustomerId || !formData.projectName || formData.amount <= 0 || formData.installments <= 0 || !formData.startDate) {
-        toast.error('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+      if (
+        !formData.code ||
+        !selectedCustomerId ||
+        !formData.projectName ||
+        formData.amount <= 0 ||
+        formData.installments <= 0 ||
+        !formData.startDate
+      ) {
+        toast.error("กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน");
         return;
       }
 
@@ -222,10 +252,12 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       await fetchProjects();
 
       setIsEditDialogOpen(false);
-      toast.success('แก้ไขโครงการสำเร็จ');
+      toast.success("แก้ไขโครงการสำเร็จ");
     } catch (error) {
-      console.error('Error updating project:', error);
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'ไม่สามารถแก้ไขโครงการได้';
+      console.error("Error updating project:", error);
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "ไม่สามารถแก้ไขโครงการได้";
       toast.error(errorMessage);
     }
   };
@@ -237,7 +269,7 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
 
   const handleDeleteClick = (item: ApiProject) => {
     if (!canDelete) {
-      toast.error('คุณไม่มีสิทธิ์ลบข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์ลบข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -257,8 +289,10 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       setIsDeleteDialogOpen(false);
       toast.success(`ลบโครงการ ${selectedItem.name} สำเร็จ`);
     } catch (error) {
-      console.error('Error deleting project:', error);
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'ไม่สามารถลบโครงการได้';
+      console.error("Error deleting project:", error);
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "ไม่สามารถลบโครงการได้";
       toast.error(errorMessage);
       setIsDeleteDialogOpen(false);
     }
@@ -266,7 +300,7 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
 
   const handleStatusChange = async (project: ApiProject, newStatus: string) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์แก้ไขข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์แก้ไขข้อมูล");
       return;
     }
 
@@ -289,19 +323,21 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
 
       toast.success(`อัพเดทสถานะโครงการเป็น "${newStatus}" สำเร็จ`);
     } catch (error) {
-      console.error('Error updating status:', error);
-      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'ไม่สามารถอัพเดทสถานะได้';
+      console.error("Error updating status:", error);
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "ไม่สามารถอัพเดทสถานะได้";
       toast.error(errorMessage);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
-      'กำลังดำเนินงาน': 'default',
-      'จบโครงการแล้ว': 'secondary',
-      'ยกเลิก': 'destructive',
+    const variants: Record<string, "default" | "secondary" | "destructive"> = {
+      กำลังดำเนินงาน: "default",
+      จบโครงการแล้ว: "secondary",
+      ยกเลิก: "destructive",
     };
-    return <Badge variant={variants[status] || 'default'}>{status}</Badge>;
+    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
   };
 
   const filteredData = data.filter(
@@ -312,9 +348,13 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
   );
 
   // คำนวณสถิติ
-  const inProgressCount = data.filter((p) => p.status === 'กำลังดำเนินงาน').length;
-  const completedCount = data.filter((p) => p.status === 'จบโครงการแล้ว').length;
-  const cancelledCount = data.filter((p) => p.status === 'ยกเลิก').length;
+  const inProgressCount = data.filter(
+    (p) => p.status === "กำลังดำเนินงาน"
+  ).length;
+  const completedCount = data.filter(
+    (p) => p.status === "จบโครงการแล้ว"
+  ).length;
+  const cancelledCount = data.filter((p) => p.status === "ยกเลิก").length;
   const totalGuarantee = data.reduce((sum, p) => sum + (p.guarantee || 0), 0);
 
   return (
@@ -372,9 +412,14 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-3xl font-bold">
-                  ฿{totalGuarantee >= 1000000
-                    ? (totalGuarantee / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
-                    : totalGuarantee.toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                  ฿
+                  {totalGuarantee >= 1000000
+                    ? (totalGuarantee / 1000000)
+                        .toFixed(1)
+                        .replace(/\.0$/, "") + "M"
+                    : totalGuarantee.toLocaleString("th-TH", {
+                        maximumFractionDigits: 0,
+                      })}
                 </div>
                 <div className="text-sm mt-1">หลักประกันสัญญารวม</div>
               </div>
@@ -433,7 +478,7 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                   </TableCell>
                   <TableCell>{item.customer}</TableCell>
                   <TableCell className="text-right">
-                    {item.budget.toLocaleString('th-TH', {
+                    {item.budget.toLocaleString("th-TH", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -448,21 +493,25 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         <DropdownMenuItem
-                          onClick={() => handleStatusChange(item, 'กำลังดำเนินงาน')}
+                          onClick={() =>
+                            handleStatusChange(item, "กำลังดำเนินงาน")
+                          }
                           className="flex items-center gap-2"
                         >
                           <Clock className="w-4 h-4 text-amber-500" />
                           <span>กำลังดำเนินงาน</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleStatusChange(item, 'จบโครงการแล้ว')}
+                          onClick={() =>
+                            handleStatusChange(item, "จบโครงการแล้ว")
+                          }
                           className="flex items-center gap-2"
                         >
                           <CheckCircle className="w-4 h-4 text-emerald-500" />
                           <span>จบโครงการแล้ว</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleStatusChange(item, 'ยกเลิก')}
+                          onClick={() => handleStatusChange(item, "ยกเลิก")}
                           className="flex items-center gap-2"
                         >
                           <XCircle className="w-4 h-4 text-red-500" />
@@ -473,7 +522,11 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleView(item)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(item)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
@@ -514,7 +567,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <Input
                 placeholder="CON-2025-XXX"
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
               />
             </div>
 
@@ -524,7 +579,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Input
                   placeholder="ชื่อหน่วยงาน"
                   value={formData.customerName}
-                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customerName: e.target.value })
+                  }
                   className="flex-1"
                 />
                 <Button
@@ -542,7 +599,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <Input
                 placeholder="ชื่อโครงการ"
                 value={formData.projectName}
-                onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, projectName: e.target.value })
+                }
               />
             </div>
 
@@ -553,7 +612,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                   type="number"
                   placeholder="0.00"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: Number(e.target.value) })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -562,7 +623,12 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                   type="number"
                   placeholder="0"
                   value={formData.installments}
-                  onChange={(e) => setFormData({ ...formData, installments: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      installments: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
             </div>
@@ -573,7 +639,12 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 type="number"
                 placeholder="0.00"
                 value={formData.guarantee}
-                onChange={(e) => setFormData({ ...formData, guarantee: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    guarantee: Number(e.target.value),
+                  })
+                }
               />
             </div>
 
@@ -583,7 +654,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Input
                   type="date"
                   value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -591,7 +664,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Input
                   type="date"
                   value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endDate: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -601,13 +676,18 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <Textarea
                 placeholder="กรอกรายละเอียดโครงการ..."
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={4}
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 ยกเลิก
               </Button>
               <Button onClick={handleAdd}>บันทึก</Button>
@@ -621,7 +701,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>แก้ไขโครงการ</DialogTitle>
-            <DialogDescription>แก้ไขข้อมูล {selectedItem?.name}</DialogDescription>
+            <DialogDescription>
+              แก้ไขข้อมูล {selectedItem?.name}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -629,7 +711,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <Input
                 placeholder="CON-2025-XXX"
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
               />
             </div>
 
@@ -639,7 +723,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Input
                   placeholder="ชื่อหน่วยงาน"
                   value={formData.customerName}
-                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customerName: e.target.value })
+                  }
                   className="flex-1"
                 />
                 <Button
@@ -657,7 +743,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <Input
                 placeholder="ชื่อโครงการ"
                 value={formData.projectName}
-                onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, projectName: e.target.value })
+                }
               />
             </div>
 
@@ -668,7 +756,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                   type="number"
                   placeholder="0.00"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: Number(e.target.value) })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -677,7 +767,12 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                   type="number"
                   placeholder="0"
                   value={formData.installments}
-                  onChange={(e) => setFormData({ ...formData, installments: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      installments: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
             </div>
@@ -688,7 +783,12 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 type="number"
                 placeholder="0.00"
                 value={formData.guarantee}
-                onChange={(e) => setFormData({ ...formData, guarantee: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    guarantee: Number(e.target.value),
+                  })
+                }
               />
             </div>
 
@@ -698,7 +798,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Input
                   type="date"
                   value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -706,7 +808,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Input
                   type="date"
                   value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endDate: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -716,13 +820,18 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <Textarea
                 placeholder="กรอกรายละเอียดโครงการ..."
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={4}
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
                 ยกเลิก
               </Button>
               <Button onClick={handleUpdate}>บันทึกการเปลี่ยนแปลง</Button>
@@ -755,10 +864,10 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               <div>
                 <Label className="text-gray-500">งบประมาณ</Label>
                 <p className="mt-1">
-                  {selectedItem.budget.toLocaleString('th-TH', {
+                  {selectedItem.budget.toLocaleString("th-TH", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
-                  })}{' '}
+                  })}{" "}
                   บาท
                 </p>
               </div>
@@ -768,7 +877,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               </div>
               <div>
                 <Label className="text-gray-500">สถานะ</Label>
-                <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                <div className="mt-1">
+                  {getStatusBadge(selectedItem.status)}
+                </div>
               </div>
               <div className="flex justify-end">
                 <Button onClick={() => setIsViewDialogOpen(false)}>ปิด</Button>
@@ -779,7 +890,10 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       </Dialog>
 
       {/* Customer Selection Dialog */}
-      <Dialog open={isCustomerSelectDialogOpen} onOpenChange={setIsCustomerSelectDialogOpen}>
+      <Dialog
+        open={isCustomerSelectDialogOpen}
+        onOpenChange={setIsCustomerSelectDialogOpen}
+      >
         <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
           <DialogHeader className="space-y-3 pb-4 border-b">
             <div className="flex items-center gap-3">
@@ -787,7 +901,9 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                 <Briefcase className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <DialogTitle className="text-xl">เลือกลูกค้า/หน่วยงาน</DialogTitle>
+                <DialogTitle className="text-xl">
+                  เลือกลูกค้า/หน่วยงาน
+                </DialogTitle>
                 <DialogDescription className="text-sm mt-1">
                   เลือกลูกค้าหรือหน่วยงานสำหรับโครงการนี้
                 </DialogDescription>
@@ -809,12 +925,15 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
 
             {/* Customer List */}
             <div className="flex-1 overflow-y-auto border-2 rounded-lg bg-gray-50">
-              {customers
-                .filter((c) =>
-                  c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                  c.code.toLowerCase().includes(customerSearchTerm.toLowerCase())
-                )
-                .length === 0 ? (
+              {customers.filter(
+                (c) =>
+                  c.name
+                    .toLowerCase()
+                    .includes(customerSearchTerm.toLowerCase()) ||
+                  c.code
+                    .toLowerCase()
+                    .includes(customerSearchTerm.toLowerCase())
+              ).length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-12 text-gray-400">
                   <Search className="w-12 h-12 mb-3 opacity-50" />
                   <p className="text-lg">ไม่พบข้อมูลลูกค้า</p>
@@ -823,9 +942,14 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
               ) : (
                 <div className="grid gap-2 p-2">
                   {customers
-                    .filter((c) =>
-                      c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                      c.code.toLowerCase().includes(customerSearchTerm.toLowerCase())
+                    .filter(
+                      (c) =>
+                        c.name
+                          .toLowerCase()
+                          .includes(customerSearchTerm.toLowerCase()) ||
+                        c.code
+                          .toLowerCase()
+                          .includes(customerSearchTerm.toLowerCase())
                     )
                     .map((customer) => (
                       <div
@@ -836,7 +960,10 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center gap-3">
-                              <Badge variant="outline" className="text-xs font-mono bg-blue-50 text-blue-700 border-blue-300">
+                              <Badge
+                                variant="outline"
+                                className="text-xs font-mono bg-blue-50 text-blue-700 border-blue-300"
+                              >
                                 {customer.code}
                               </Badge>
                               <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
@@ -868,7 +995,8 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
 
                             {customer.address && (
                               <div className="text-sm text-gray-500 line-clamp-1">
-                                <span className="text-gray-400">📍</span> {customer.address}
+                                <span className="text-gray-400">📍</span>{" "}
+                                {customer.address}
                               </div>
                             )}
                           </div>
@@ -893,10 +1021,19 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
             {/* Footer Info */}
             <div className="flex items-center justify-between px-2 py-2 bg-blue-50 rounded-lg text-sm">
               <span className="text-gray-600">
-                พบ {customers.filter((c) =>
-                  c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                  c.code.toLowerCase().includes(customerSearchTerm.toLowerCase())
-                ).length} รายการ
+                พบ{" "}
+                {
+                  customers.filter(
+                    (c) =>
+                      c.name
+                        .toLowerCase()
+                        .includes(customerSearchTerm.toLowerCase()) ||
+                      c.code
+                        .toLowerCase()
+                        .includes(customerSearchTerm.toLowerCase())
+                  ).length
+                }{" "}
+                รายการ
               </span>
               <Button
                 variant="ghost"
@@ -912,17 +1049,23 @@ export default function ProjectPage({ userRole }: ProjectPageProps) {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบโครงการ "{selectedItem?.name}"? การดำเนินการนี้ไม่สามารถยกเลิกได้
+              คุณแน่ใจหรือไม่ว่าต้องการลบโครงการ "{selectedItem?.name}"?
+              การดำเนินการนี้ไม่สามารถยกเลิกได้
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>ลบ</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              ลบ
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

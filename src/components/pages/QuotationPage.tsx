@@ -16,6 +16,7 @@ import {
   Plus,
   Trash2,
   Eye,
+  Edit,
   Search,
   Printer,
   FileText,
@@ -23,6 +24,7 @@ import {
   CheckCircle2,
   XCircle,
   ChevronDown,
+  Settings,
 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
@@ -51,6 +53,13 @@ import {
 import { Label } from "../ui/label";
 import { toast } from "sonner";
 import TaxInvoiceForm from "../TaxInvoiceForm";
+import {
+  companySettingService,
+  type CompanySetting,
+} from "../../services/companySettingService";
+
+import ThaiBahtText from "thai-baht-text";
+import { customerService } from "../../services/customerService";
 
 interface QuotationPageProps {
   userRole: UserRole;
@@ -67,6 +76,7 @@ interface Quotation {
   customer_tax_id?: string;
   customer_phone?: string;
   customer_email?: string;
+  customer_branch_name?: string;
   reference_doc?: string;
   shipping_address?: string;
   shipping_phone?: string;
@@ -90,6 +100,7 @@ interface Quotation {
   grand_total?: number;
   amount?: number;
   status: "ร่าง" | "รออนุมัติ" | "อนุมัติแล้ว" | "ยกเลิก";
+  doc_type?: "original" | "copy"; // ประเภทเอกสาร: ต้นฉบับ หรือ สำเนา
   description?: string;
   valid_until?: string;
   created_at?: string;
@@ -99,12 +110,19 @@ interface Quotation {
 export default function QuotationPage({ userRole }: QuotationPageProps) {
   const API_URL = "http://127.0.0.1:8000/api/quotations";
   const [data, setData] = useState<Quotation[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [companySetting, setCompanySetting] = useState<CompanySetting | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showQuotationForm, setShowQuotationForm] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Quotation | null>(null);
+  const [filterDocType, setFilterDocType] = useState<
+    "all" | "original" | "copy"
+  >("all");
 
   const canEdit = userRole === "admin" || userRole === "account";
   const canDelete = userRole === "admin" || userRole === "account";
@@ -112,7 +130,33 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
   // Fetch data from API
   useEffect(() => {
     fetchQuotations();
+    loadCompanySettings();
+    fetchCustomers();
   }, []);
+
+  const loadCompanySettings = async () => {
+    try {
+      const setting = await companySettingService.get();
+      setCompanySetting(setting);
+    } catch (error) {
+      console.error("Error loading company settings:", error);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const allCustomers = await customerService.getAll();
+      setCustomers(allCustomers);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
+  };
+
+  const getBranchNameByCustomer = (customerCode?: string) => {
+    if (!customerCode || !customers.length) return "-";
+    const customer = customers.find((c) => c.code === customerCode);
+    return customer?.branch_name || "-";
+  };
 
   const fetchQuotations = async () => {
     try {
@@ -135,12 +179,18 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
   const handleSaveQuotation = () => {
     // TaxInvoiceForm บันทึกข้อมูลให้เองแล้ว ไม่ต้องบันทึกซ้ำ
     setShowQuotationForm(false);
+    setSelectedItem(null);
     fetchQuotations();
   };
 
   const handleView = (item: Quotation) => {
     setSelectedItem(item);
     setIsViewDialogOpen(true);
+  };
+
+  const handleCancelQuotationForm = () => {
+    setShowQuotationForm(false);
+    setSelectedItem(null);
   };
   const handleEdit = (item: Quotation) => {
     setSelectedItem(item);
@@ -216,7 +266,12 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         .includes(searchTerm.toLowerCase());
     const matchesStatus =
       filterStatus === "all" || item.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesDocType =
+      filterDocType === "all" ||
+      (filterDocType === "original" &&
+        (!item.doc_type || item.doc_type === "original")) ||
+      (filterDocType === "copy" && item.doc_type === "copy");
+    return matchesSearch && matchesStatus && matchesDocType;
   });
 
   // ถ้ากำลังแสดงฟอร์ม ให้แสดงฟอร์มเต็มหน้าจอแทนที่หน้ารายการ
@@ -225,15 +280,33 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       <TaxInvoiceForm
         documentType="quotation"
         onSave={handleSaveQuotation}
-        onCancel={() => setShowQuotationForm(false)}
-        editData={selectedItem}
+        onCancel={handleCancelQuotationForm}
+        editData={
+          selectedItem as unknown as Record<string, unknown> | undefined
+        }
       />
     );
   }
-  const logoUrl = `${window.location.origin}/logo.png`; // ชี้ไป public/logo.png
-  const contactImgUrl = `${window.location.origin}/contact.png`;
 
-  const handlePrint = (item: Quotation) => {
+  // Build logo URL from company settings (supports http(s), data URI, or server-relative paths)
+  const API_ORIGIN = "http://127.0.0.1:8000";
+  const resolveLogoUrl = (raw?: string | null): string => {
+    if (!raw || raw.trim() === "") return `${window.location.origin}/logo.png`;
+    const val = raw.trim();
+    if (val.startsWith("data:")) return val;
+    if (val.startsWith("http://") || val.startsWith("https://")) return val;
+    if (val.startsWith("/")) return `${API_ORIGIN}${val}`; // e.g. /storage/logo.png
+    return `${API_ORIGIN}/${val}`; // e.g. storage/logo.png
+  };
+  const logoUrl = resolveLogoUrl(companySetting?.logo);
+
+  const handlePrintWithType = (
+    item: Quotation,
+    printType: "original" | "copy"
+  ) => {
+    // ถ้ามี doc_type ในฐานข้อมูลให้ใช้จากฐานข้อมูล ถ้าไม่มีให้ใช้ที่เลือก
+    const isCopy = item.doc_type === "copy" || printType === "copy";
+
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast.error("กรุณาอนุญาตให้เปิดหน้าต่างใหม่");
@@ -246,6 +319,71 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
     const after_discount = Number(item.after_discount || 0);
     const vat = Number(item.vat || 0);
     const grand_total = Number(item.grand_total || 0);
+
+    interface QuotationItem {
+      id: string;
+      description: string;
+      amount: number;
+      productId?: number;
+      qty?: number;
+      unit?: string;
+      price?: number;
+    }
+
+    interface PageItem {
+      pageNum: number;
+      items: QuotationItem[];
+      isLastPage: boolean;
+    }
+
+    interface QuotationItem {
+      id: string;
+      description: string;
+      amount: number;
+      productId?: number;
+      qty?: number;
+      unit?: string;
+      price?: number;
+    }
+
+    interface PageItem {
+      pageNum: number;
+      items: QuotationItem[];
+      isLastPage: boolean;
+    }
+
+    // Split items into pages (18 items per page)
+    const itemsPerPage = 16;
+    const items = item.items || [];
+    const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage)); // At least 1 page
+    const pages: PageItem[] = [];
+
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      const startIdx = pageNum * itemsPerPage;
+      const endIdx = Math.min(startIdx + itemsPerPage, items.length);
+      const pageItems = items.slice(startIdx, endIdx);
+      const isLastPage = pageNum === totalPages - 1;
+
+      // Fill remaining rows with empty items to maintain consistent table size
+      const emptyRows = itemsPerPage - pageItems.length;
+      const filledPageItems = [...pageItems];
+      for (let i = 0; i < emptyRows; i++) {
+        filledPageItems.push({
+          id: `empty-${i}`,
+          description: " ",
+          amount: 0,
+          qty: undefined,
+          unit: " ",
+          price: undefined,
+        });
+      }
+
+      pages.push({
+        pageNum: pageNum + 1,
+        items: filledPageItems,
+        isLastPage,
+      });
+    }
 
     const htmlContent = `
   <!DOCTYPE html>
@@ -268,10 +406,6 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       html, body {
         margin: 0;
         padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        min-height: 100vh;
         background-color: #f0f0f0;
       }
 
@@ -279,16 +413,30 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         font-family: 'Anuphan', sans-serif;
         font-size: 14px;
         color: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 0;
       }
 
       .page-container {
         position: relative;
         width: 210mm;
-        height: 297mm;
+        min-height: 297mm;
         padding: 15mm 15mm;
         margin: 20px auto;
         background: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+
+      @media print {
+        .page-container {
+          page-break-after: always;
+          margin: 0;
+        }
+        .page-container:last-child {
+          page-break-after: avoid;
+        }
       }
 
       /* แถบสีน้ำเงินด้านขวา */
@@ -298,22 +446,57 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         top: 0;
         right: 0;
         width: 32px;
-        height: 262px;
+        height: 310px;
         background: #285c91;
         z-index: 10;
+      }
+
+      /* Grayscale for copy */
+      ${
+        isCopy
+          ? `
+      .page-container::before {
+        background: #808080 !important;
+      }
+      .doc-title {
+        color: #000 !important;
+      }
+      body {
+        filter: grayscale(100%);
+        -webkit-filter: grayscale(100%);
+      }
+      /* Exempt images (logo) from grayscale */
+      img {
+        filter: none !important;
+        -webkit-filter: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      `
+          : ""
       }
 
       @media print {
         html, body {
           background-color: white;
           display: block;
+          margin: 0;
+          padding: 0;
         }
         .page-container {
           width: 210mm;
-          height: 297mm;
+          min-height: 297mm;
+          height: auto;
           padding: 15mm 15mm;
           margin: 0;
           box-shadow: none;
+          page-break-before: always;
+        }
+        .page-container:first-child {
+          page-break-before: avoid;
+        }
+        .page-container:last-child {
+          page-break-after: avoid;
         }
         .page-container::before {
           -webkit-print-color-adjust: exact;
@@ -344,14 +527,8 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
     display: flex;
     flex-direction: column;
     align-items: flex-end;    /* ชิดขวา */
-    margin-right: 70px;
+    margin-right: 5px;
     gap: 8px;
-  }
-
-  .doc-title {
-    font-size: 18px;
-    font-weight: 700;
-    
   }
 
   /* แบ่งด้านในเป็น 2 ช่อง: ข้อความ + รูป */
@@ -362,12 +539,22 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
     justify-content: flex-end;
   }
 
-  .contact-info {
-    text-align: left !important;
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
+          .info-box {
+            display: grid;
+            grid-template-columns: auto auto 1fr;
+            gap: 5px 8px; /*ช่องแรกแถว ช่องสองคอลัม */
+          }
+          .info td.info-right > .info-box{
+            display: grid;
+            grid-template-columns: max-content .7ch 1fr; 
+            column-gap: 6px;      
+            row-gap: 6px;        
+            align-items: baseline;
+            line-height: 1.25;    
+            }
+          .info-box .k{ white-space:nowrap; }
+          .info-box .sep{ text-align:center; }
+          .info-box .v{ min-width:0 }
   .contact-img img {
     width: 70px;           /* ปรับขนาดรูปตามต้องการ */
     height: 70px;
@@ -377,7 +564,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
 
 
       th, td {
-        border: 1.2px solid #000;
+        border: 1px solid #000;
         padding: 6px 8px;
       }
       th {
@@ -396,7 +583,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         color: #000;
       }
       .doc-title {
-        text-align: right;
+        text-align: center;
         font-weight: 700;
         margin-top: 45px;
         color: #578fc5;
@@ -409,7 +596,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       }
 
       .info {
-        border: 1.2px solid #000;
+        border: 1px solid #000;
         margin-top: 5px;
         font-size: 14px;
 
@@ -417,7 +604,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       .info td { padding: 6px 8px; vertical-align: top; }
 
       .info-right { 
-      border: 1.2px solid #000;
+      border: 1px solid #000;
       margin-top: 5px;
       font-size: 14px;
       }
@@ -425,7 +612,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       .items {
         width: 100%;
         border-collapse: collapse;
-        font-family: Arial, sans-serif;
+        font-family: 'Anuphan', sans-serif;
         font-size: 10pt;
       }
 
@@ -434,22 +621,20 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         padding: 8px 5px;
         background-color: #f2f2f2;
         text-align: center;
-        font-weight: bold;
         height: 30px;
       }
 
       .items tbody tr.item-row td {
         border-left: 0.5px solid #000;
         border-right: 0.5px solid #000;
+        border-bottom: none;
         padding: 6px 10px;
-        vertical-align: top;
-      }
-
-      .items tbody tr.spacer-row td {
-        border-left: 0.5px solid #000;
-        border-right: 0.5px solid #000;
-        height: 320px;
-        padding: 0;
+        vertical-align: middle;
+        word-wrap: break-word;
+        word-break: break-word;
+        white-space: normal;
+        height: 30px;
+        line-height: 1.2;
       }
 
       .items tbody tr td[colspan="6"] {
@@ -460,10 +645,9 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       }
 
 
-      .summary-footer td {
-        border: 1.2px;
+      .items tfoot.summary-footer td {
+        border: 1px solid #000;
         padding: 6px 8px;
-        border: 1.2px solid #000;
       }
       .summary {
         width: 45%;
@@ -472,74 +656,114 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
         margin-top: 6px;
       }
       .summary td {
-        border: 1.2px solid #000;
+        border: 1px solid #000;
         padding: 6px;
       }
       .summary td.label { font-weight: 600; }
       .summary td.value { text-align: right; }
 
       .note {
-        border: 1.2px solid #000;
+        border: 1px solid #000;
         padding: 6px 10px;
         margin-top: 10px;
         font-size: 13px;
       }
 
       .footer {
-        width: 100%;
-        text-align: center;
-        border-collapse: collapse;
-        margin-top: 15px;
-        font-size: 13px;
-      }
-      .footer td { border: none; padding: 6px; }
-      .sig-space { height: 50px; }
+            text-align: center;
+            border-collapse: collapse;
+            font-size: 13px;
+            position: absolute;
+           
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 30mm);
+          }
+          .footer td { 
+            border: none; 
+            padding: 6px; 
+            vertical-align: top;
+          }
+          .sig-row td {
+            padding-top: 30px;
+            line-height: 2;
+          }
+          .sig-title {
+            margin-bottom: 8px;
+          }
+
     </style>
   </head>
   <body>
+  ${pages
+    .map(
+      (page) => `
   <div class="page-container">
 
    <table class="header">
   <tr>
     <td>
       <!-- ฝั่งซ้ายตามเดิม -->
-      <img src="${logoUrl}" alt="Logo" style="height:60px; margin-bottom:6px;" />
-      <div class="company-name">บริษัท ไอ ที บี ที คอร์ปอเรชั่น จำกัด (สำนักงานใหญ่)</div>
-      170/372 หมู่ที่ 1 ตำบลบางคูวัต อำเภอเมืองปทุมธานี จังหวัดปทุมธานี 12000<br/>
-      เลขประจำตัวผู้เสียภาษี 0135561023453 <br/> 
-      โทร : 02-1014461 Email : service@itbtthai.com
-    </td>
+      <img src="${logoUrl}" alt="Logo" style="height:60px; margin-bottom:6px;" color="#000"/>
+      <div class="company-name">${companySetting?.company_name || "บริษัท"} ${
+        companySetting?.branch_name ? `(${companySetting.branch_name})` : ""
+      }</div>
+      ${companySetting?.address || ""}<br/>
+      เลขประจำตัวผู้เสียภาษี ${companySetting?.tax_id || "-"} <br/> 
+โทร : ${companySetting?.phone || "-"} Email : <a href="${
+        companySetting?.email || ""
+      }">${companySetting?.email || "-"} </a>
+              </td>
 
     <td class="header-right-cell">
   <div class="header-right">
     <div class="doc-title">ใบเสนอราคา <br/>  
-    <dix class="doc-title2">Quotation</div>
+    <div class="doc-title2">Quotation</div>
+      <div class="doc-title3" style="font-size: 14px; color: #000; font-weight: 400; margin-top: 5px;">${
+        isCopy ? "สำเนา" : "ต้นฉบับ"
+      }</div>
   </div>
-  </td>
+  </div>
+    </td>
   
   </tr>
   </table>
 
-    <table class="info">
-      <tr>
-        <td style="width:72%">
-          <b>ลูกค้า :</b> ${item.customer_name || "-"}<br/>
-          <b>ที่อยู่ :</b> ${item.customer_address || "-"}<br/>
-          <b>โทร :</b> ${item.customer_phone || "-"} <b>อีเมล :</b> ${
-      item.customer_email || "-"
-    }<br/>
-          <b>เลขประจำตัวผู้เสียภาษี :</b> ${item.customer_tax_id || "-"}
+    ${
+      page.pageNum === 1
+        ? `
+      <table class="info">
+      <tr>  
+        <td style="width:64%" class="info-left">
+          ลูกค้า : ${item.customer_name || "-"}<br/>
+          ที่อยู่ : ${item.customer_address || "-"}<br/>
+          โทร : ${item.customer_phone || "-"} อีเมล์ : ${
+            item.customer_email || "-"
+          }<br/>
+          เลขประจำตัวผู้เสียภาษี : ${
+            item.customer_tax_id || "-"
+          } สาขา ${getBranchNameByCustomer(item.customer_code)}
         </td>        
-        <td style="width:28 %" class="info-right">
-          <b>เลขที่ :</b> ${item.quotation_number}<br/>
-          <b>วันที่ :</b> ${new Date(item.date).toLocaleDateString(
-            "th-TH"
-          )}<br/>
-          <b>ยืนราคา :</b> ${item.status || "-"}<br/>
-          <b>ผู้ขาย :</b> ${item.seller_name || "-"}
+        <td style="width:35%" class="info-right">
+                  <div class="info-box">
+                        <span class="k">เลขที่</span><span class="sep">:</span><span class="v">&nbsp;${
+                          item.quotation_number
+                        }</span>
+                        <span class="k">วันที่</span><span class="sep">:</span><span class="v">&nbsp;${new Date(
+                          item.date
+                        ).toLocaleDateString("th-TH")}</span>
+                        <span class="k">อ้างอิง</span><span class="sep">:</span><span class="v">&nbsp;${
+                          item.status || "-"
+                        }</span>
+                        <span class="k">ผู้ขาย</span><span class="sep">:</span><span class="v">&nbsp;${
+                          item.seller_name || "-"
+                        }</span>
+                        </div>
         </td>
       </tr>
-    </table>
+    </table>`
+        : ""
+    }
 
     <table class="items" style="margin-top:10px;">
       <thead>
@@ -554,39 +778,54 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
       </thead>
       <tbody>
         ${
-          item.items && item.items.length > 0
-            ? item.items
+          page.items.length > 0
+            ? page.items
                 .map(
-                  (i, idx) => `
+                  (i, idx: number) => `
               <tr class="item-row">
-                <td class="text-center">${idx + 1}</td>
-                <td>${i.description || "-"}</td>
-                <td class="text-center">${i.qty || 1}</td>
-                <td class="text-center">${i.unit || "-"}</td>
-                <td class="text-right">${Number(
-                  i.price || 0
-                ).toLocaleString()}</td>
-                <td class="text-right">${Number(
-                  i.amount || 0
-                ).toLocaleString()}</td>
+                <td class="text-center">${
+                  i.id.startsWith("empty-")
+                    ? ""
+                    : (page.pageNum - 1) * itemsPerPage + idx + 1
+                }</td>
+                <td style="max-width: 300px;">${
+                  i.id.startsWith("empty-") ? "" : i.description || "-"
+                }</td>
+                <td class="text-center">${
+                  i.id.startsWith("empty-") ? "" : i.qty || 1
+                }</td>
+                <td class="text-center">${
+                  i.id.startsWith("empty-") ? "" : i.unit || "-"
+                }</td>
+                <td class="text-right">${
+                  i.id.startsWith("empty-")
+                    ? ""
+                    : Number(i.price || 0).toLocaleString()
+                }</td>
+                <td class="text-right">${
+                  i.id.startsWith("empty-")
+                    ? ""
+                    : Number(i.amount || 0).toLocaleString()
+                }</td>
               </tr>`
                 )
                 .join("")
             : `<tr class="item-row"><td colspan="6" style="text-align: center;">- ไม่มีรายการสินค้า -</td></tr>`
         }
-        <tr class="spacer-row">
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
+        ${
+          !page.isLastPage
+            ? `<tr class="item-row">
+            <td colspan="6" style="border-bottom: 1px solid #000; padding: 0; height: 1px;"></td>
+          </tr>`
+            : ""
+        }
       </tbody>
-<tfoot class="summary-footer">
+${
+  page.isLastPage
+    ? `<tfoot class="summary-footer">
         <tr>
             <td colspan="3" style="text-align: left; border-right: none;"> 
-                <b>หมายเหตุ :</b>
+                <b>หมายเหตุ :</b></br>${item.notes || ""}
             </td>
     
             <td colspan="2" style="text-align: right; padding-right: 5px;">
@@ -596,58 +835,67 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                 ภาษีมูลค่าเพิ่ม VAT 7%
             </td>
             <td colspan="1" style="text-align: right; padding-right: 5px;">
-            <b> ${subtotal.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-            })} </b><br/>
-            <b> ${discount_amount.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-            })} </b><br/>
-            <b> ${after_discount.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-            })} </b><br/>
-            <b> ${vat.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-            })} </b><br/>
+             ${subtotal.toLocaleString(undefined, {
+               minimumFractionDigits: 2,
+             })} 
+             ${discount_amount.toLocaleString(undefined, {
+               minimumFractionDigits: 2,
+             })} 
+             ${after_discount.toLocaleString(undefined, {
+               minimumFractionDigits: 2,
+             })} 
+             ${vat.toLocaleString(undefined, {
+               minimumFractionDigits: 2,
+             })} 
                 
             </td>
         </tr>
     
         <tr>
             <td colspan="3" style="text-align: left;">
-                <b>จำนวนเงินเป็นตัวอักษร (..................................................)</b>
-            </td>
+                จำนวนเงินเป็นตัวอักษร ${ThaiBahtText(grand_total)}
+            </td> 
     
             <td colspan="2" style="text-align: right; padding-right: 5px;">
-                <b>จำนวนเงินรวมทั้งสิ้น</b>
+                จำนวนเงินรวมทั้งสิ้น
             </td>
             <td colspan="1" style="text-align: right; padding-right: 5px;">
-            <b> ${grand_total.toLocaleString(undefined, {
+            ${grand_total.toLocaleString(undefined, {
               minimumFractionDigits: 2,
-            })} </b>
+            })} 
 
             </td>
         </tr>
-    </tfoot>
+    </tfoot>`
+    : ""
+}
+         
 </table>
-    <div style="clear:both;"></div>
-<table class="footer" style="width: 100%;">
+${
+  page.isLastPage
+    ? `<table class="footer" style="width: 100%;">
     <tbody>
         <tr class="sig-row">
-            <td style="width: 50%; text-align: left; padding-left: 20px;">
+            <td style="width: 50%; text-align: left; padding-left: 70px;">
                 ลงชื่อ..........................................อนุมัติสั่งซื้อ<br/>
                 (..................................................)<br/>
                 วันที่อนุมัติ......./................./...........
             </td>
             
-            <td style="width: 50%; text-align: right; padding-right: 20px;">
+            <td style="width: 50%; text-align: left; padding-left: 40px;">
                 ลงชื่อ..........................................ผู้เสนอราคา<br/>
                 (..................................................)<br/>
                 วันที่เสนอราคา......./................./........... 
                 </td>
         </tr>
     </tbody>
-</table>
+</table>`
+    : ""
+}
   </div>
+  `
+    )
+    .join("")}
   </body>
   </html>
   `;
@@ -750,22 +998,45 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                 </p>
               )}
             </div>
-            <Button onClick={() => setShowQuotationForm(true)}>
+            <Button
+              onClick={() => {
+                setSelectedItem(null);
+                setShowQuotationForm(true);
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
               สร้างใบเสนอราคา
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="relative">
+          <div className="mb-4 flex gap-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="ค้นหาเลขที่เอกสาร, ลูกค้า..."
+                placeholder="     ค้นหาเลขที่เอกสาร, ลูกค้า..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">
+                ประเภทเอกสาร:
+              </label>
+              <select
+                value={filterDocType}
+                onChange={(e) =>
+                  setFilterDocType(
+                    e.target.value as "all" | "original" | "copy"
+                  )
+                }
+                className="h-10 px-3 py-2 text-sm border rounded-md border-input bg-background"
+              >
+                <option value="all">ทั้งหมด</option>
+                <option value="original">ต้นฉบับ</option>
+                <option value="copy">สำเนา</option>
+              </select>
             </div>
           </div>
 
@@ -783,7 +1054,17 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
             <TableBody>
               {filteredData.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.quotation_number}</TableCell>
+                  <TableCell>
+                    {item.quotation_number}
+                    {item.doc_type === "copy" && (
+                      <Badge
+                        variant="outline"
+                        className="ml-2 text-xs bg-gray-100"
+                      >
+                        สำเนา
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {new Date(item.date).toLocaleDateString("th-TH")}
                   </TableCell>
@@ -791,7 +1072,10 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                     {item.customer_name || item.customer || "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    ฿{(item.grand_total || item.amount || 0).toLocaleString()}
+                    ฿
+                    {Number(
+                      item.grand_total || item.amount || 0
+                    ).toLocaleString()}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -842,6 +1126,7 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleView(item)}
+                        title="ดูรายละเอียด"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -850,14 +1135,26 @@ export default function QuotationPage({ userRole }: QuotationPageProps) {
                         size="icon"
                         onClick={() => handleEdit(item)}
                         disabled={!canEdit}
+                        title="แก้ไขเอกสาร"
                       >
-                        <FileText className="w-4 h-4" />
+                        <Edit className="w-4 h-4" />
                       </Button>
 
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handlePrint(item)}
+                        onClick={() => {
+                          const isCopy = item.doc_type === "copy";
+                          handlePrintWithType(
+                            item,
+                            isCopy ? "copy" : "original"
+                          );
+                        }}
+                        title={
+                          item.doc_type === "copy"
+                            ? "พิมพ์สำเนา (ขาวดำ)"
+                            : "พิมพ์ต้นฉบับ (สี)"
+                        }
                       >
                         <Printer className="w-4 h-4" />
                       </Button>

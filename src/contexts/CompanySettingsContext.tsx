@@ -30,7 +30,25 @@ export const CompanySettingsProvider: React.FC<{ children: ReactNode }> = ({ chi
       const data = await companySettingService.get();
       setSettings(data);
     } catch (error) {
-      console.error('Error loading company settings:', error);
+      // Don't surface noisy red errors to the user console when backend is unreachable.
+      // Keep a debug log for development troubleshooting instead and fall back to sane defaults.
+      console.debug('Error loading company settings (silent):', error);
+      setSettings({
+        id: 0,
+        company_name: '',
+        branch_name: null,
+        tax_id: '',
+        address: '',
+        phone: null,
+        email: null,
+        logo: null,
+        enable_email: false,
+        enable_sms: false,
+        auto_backup: false,
+        vat_rate: 7,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
     } finally {
       setLoading(false);
     }

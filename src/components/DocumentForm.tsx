@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Card, CardContent } from './ui/card';
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Card, CardContent } from "./ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from "./ui/select";
 import {
   Table,
   TableBody,
@@ -18,14 +18,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table';
-import { Plus, Trash2 } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { mockCustomers, mockProducts } from './mockData';
-import type { Customer, Product } from './mockData';
-
-
+} from "./ui/table";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { mockCustomers, mockProducts } from "./mockData";
+import type { Customer, Product } from "./mockData";
 
 interface DocumentItem {
   id: string;
@@ -39,7 +44,7 @@ interface DocumentItem {
 }
 
 interface DocumentFormProps {
-  documentType: 'quotation' | 'purchase' | 'invoice';
+  documentType: "quotation" | "purchase" | "invoice";
   customers: Customer[];
   products: Product[];
   onSave: (data: any) => void;
@@ -53,42 +58,51 @@ export default function DocumentForm({
   onSave,
   onCancel,
 }: DocumentFormProps) {
-  const today = new Date().toISOString().split('T')[0];
-  
+  const today = new Date().toISOString().split("T")[0];
+
   const [docNumber, setDocNumber] = useState(() => {
-    const prefix = documentType === 'quotation' ? 'QT' : documentType === 'purchase' ? 'PO' : 'INV';
+    const prefix =
+      documentType === "quotation"
+        ? "QT"
+        : documentType === "purchase"
+        ? "PO"
+        : "INV";
     return `${prefix}${Date.now().toString().slice(-6)}`;
   });
   const [docDate, setDocDate] = useState(today);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [openCustomer, setOpenCustomer] = useState(false);
-  const [currency, setCurrency] = useState('THB');
+  const [currency, setCurrency] = useState("THB");
   const [items, setItems] = useState<DocumentItem[]>([]);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState(0);
   const [vatRate, setVatRate] = useState(7);
-  const [openProductPopover, setOpenProductPopover] = useState<string | null>(null);
+  const [openProductPopover, setOpenProductPopover] = useState<string | null>(
+    null
+  );
 
   const getDocumentTitle = () => {
     switch (documentType) {
-      case 'quotation':
-        return 'ใบเสนอราคา';
-      case 'purchase':
-        return 'ใบสั่งซื้อ';
-      case 'invoice':
-        return 'ใบแจ้งหนี้';
+      case "quotation":
+        return "ใบเสนอราคา";
+      case "purchase":
+        return "ใบสั่งซื้อ";
+      case "invoice":
+        return "ใบแจ้งหนี้";
       default:
-        return 'เอกสาร';
+        return "เอกสาร";
     }
   };
 
   const handleAddItem = () => {
     const newItem: DocumentItem = {
       id: Date.now().toString(),
-      productId: '',
-      productCode: '',
-      productName: '',
-      unit: 'ชิ้น',
+      productId: "",
+      productCode: "",
+      productName: "",
+      unit: "ชิ้น",
       quantity: 1,
       pricePerUnit: 0,
       total: 0,
@@ -186,7 +200,7 @@ export default function DocumentForm({
     onSave(data);
   };
 
-  const activeCustomers = customers.filter((c) => c.status === 'active');
+  const activeCustomers = customers.filter((c) => c.status === "active");
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
@@ -204,7 +218,10 @@ export default function DocumentForm({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>เลขที่เอกสาร</Label>
-              <Input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} />
+              <Input
+                value={docNumber}
+                onChange={(e) => setDocNumber(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>สกุลเงิน</Label>
@@ -221,7 +238,11 @@ export default function DocumentForm({
             </div>
             <div className="space-y-2">
               <Label>วันที่</Label>
-              <Input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} />
+              <Input
+                type="date"
+                value={docDate}
+                onChange={(e) => setDocDate(e.target.value)}
+              />
             </div>
           </div>
 
@@ -239,16 +260,20 @@ export default function DocumentForm({
                   {selectedCustomer ? (
                     <div className="text-left w-full">
                       <div className="flex gap-2">
-                        <span className="text-blue-600">{selectedCustomer.code}</span>
+                        <span className="text-blue-600">
+                          {selectedCustomer.code}
+                        </span>
                         <span>-</span>
                         <span>{selectedCustomer.name}</span>
                       </div>
                       {selectedCustomer.address && (
-                        <div className="text-sm text-gray-500 mt-1">{selectedCustomer.address}</div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          {selectedCustomer.address}
+                        </div>
                       )}
                     </div>
                   ) : (
-                    'เลือกลูกค้า/คู่ค้า'
+                    "เลือกลูกค้า/คู่ค้า"
                   )}
                 </Button>
               </PopoverTrigger>
@@ -269,12 +294,16 @@ export default function DocumentForm({
                           className="flex flex-col items-start py-3"
                         >
                           <div className="flex gap-2">
-                            <span className="text-blue-600">{customer.code}</span>
+                            <span className="text-blue-600">
+                              {customer.code}
+                            </span>
                             <span>-</span>
                             <span>{customer.name}</span>
                           </div>
                           {customer.address && (
-                            <div className="text-sm text-gray-500 mt-1">{customer.address}</div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              {customer.address}
+                            </div>
                           )}
                         </CommandItem>
                       ))}
@@ -294,18 +323,19 @@ export default function DocumentForm({
               </div>
               <div className="space-y-2">
                 <div className="text-sm text-gray-600">ใบส่งสินค้าจาก</div>
-                <div>{selectedCustomer.branchName || '-'}</div>
+                <div>{selectedCustomer.branchName || "-"}</div>
               </div>
               <div className="space-y-2">
                 <div className="text-sm text-gray-600">แปรรูปลูกค้าจาก</div>
                 <div>
                   {selectedCustomer.name}
-                  {selectedCustomer.branchName && ` (${selectedCustomer.branchName})`}
+                  {selectedCustomer.branchName &&
+                    ` (${selectedCustomer.branchName})`}
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="text-sm text-gray-600">หน่วยนับภาษี</div>
-                <div>{selectedCustomer.taxId || '-'}</div>
+                <div>{selectedCustomer.taxId || "-"}</div>
               </div>
             </div>
           )}
@@ -324,7 +354,9 @@ export default function DocumentForm({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-100">
-                    <TableHead className="w-[60px] text-center">ลำดับ (SRNO)</TableHead>
+                    <TableHead className="w-[60px] text-center">
+                      ลำดับ (SRNO)
+                    </TableHead>
                     <TableHead className="min-w-[300px]">รายการ</TableHead>
                     <TableHead className="w-[150px]">รหัสสินค้า</TableHead>
                     <TableHead className="w-[120px]">หน่วยนับ</TableHead>
@@ -337,14 +369,19 @@ export default function DocumentForm({
                 <TableBody>
                   {items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-gray-400 py-8">
+                      <TableCell
+                        colSpan={8}
+                        className="text-center text-gray-400 py-8"
+                      >
                         ไม่มีรายการสินค้า
                       </TableCell>
                     </TableRow>
                   ) : (
                     items.map((item, index) => (
                       <TableRow key={item.id}>
-                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell className="text-center">
+                          {index + 1}
+                        </TableCell>
                         <TableCell>
                           <Popover
                             open={openProductPopover === item.id}
@@ -357,7 +394,7 @@ export default function DocumentForm({
                                 variant="outline"
                                 className="w-full justify-start"
                               >
-                                {item.productName || 'เลือกสินค้า...'}
+                                {item.productName || "เลือกสินค้า..."}
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-[400px] p-0">
@@ -379,7 +416,8 @@ export default function DocumentForm({
                                             {product.code} - {product.name}
                                           </div>
                                           <div className="text-sm text-gray-500">
-                                            ราคา: {product.price.toLocaleString()} บาท
+                                            ราคา:{" "}
+                                            {product.price.toLocaleString()} บาท
                                           </div>
                                         </div>
                                       </CommandItem>
@@ -403,7 +441,10 @@ export default function DocumentForm({
                             type="number"
                             value={item.pricePerUnit}
                             onChange={(e) =>
-                              handleUpdatePrice(item.id, parseFloat(e.target.value) || 0)
+                              handleUpdatePrice(
+                                item.id,
+                                parseFloat(e.target.value) || 0
+                              )
                             }
                           />
                         </TableCell>
@@ -412,7 +453,10 @@ export default function DocumentForm({
                             type="number"
                             value={item.quantity}
                             onChange={(e) =>
-                              handleUpdateQuantity(item.id, parseFloat(e.target.value) || 0)
+                              handleUpdateQuantity(
+                                item.id,
+                                parseFloat(e.target.value) || 0
+                              )
                             }
                             min="1"
                           />
@@ -462,7 +506,9 @@ export default function DocumentForm({
                   <Input
                     type="number"
                     value={discount}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setDiscount(parseFloat(e.target.value) || 0)
+                    }
                     className="w-20 text-right"
                     min="0"
                     max="100"
@@ -500,10 +546,17 @@ export default function DocumentForm({
 
           {/* Action Buttons */}
           <div className="flex justify-start gap-2 pt-4 border-t">
-            <Button onClick={handleSave} className="bg-cyan-500 hover:bg-cyan-600">
+            <Button
+              onClick={handleSave}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
               บันทึก
             </Button>
-            <Button variant="outline" onClick={onCancel} className="text-red-500 border-red-500">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="text-red-500 border-red-500"
+            >
               ยกเลิก
             </Button>
           </div>

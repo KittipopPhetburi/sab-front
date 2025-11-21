@@ -1,16 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
-import type { UserRole } from '../../types';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Checkbox } from '../ui/checkbox';
-import { Separator } from '../ui/separator';
-import { toast } from 'sonner';
-import { companySettingService } from '../../services/companySettingService';
-import { useCompanySettings } from '../../contexts/CompanySettingsContext';
-import { Upload, X } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import type { UserRole } from "../../types";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Checkbox } from "../ui/checkbox";
+import { Separator } from "../ui/separator";
+import { toast } from "sonner";
+import { companySettingService } from "../../services/companySettingService";
+import { useCompanySettings } from "../../contexts/CompanySettingsContext";
+import { Upload, X } from "lucide-react";
 
 interface SettingsPageProps {
   userRole: UserRole;
@@ -19,12 +25,12 @@ interface SettingsPageProps {
 export default function SettingsPage({ userRole }: SettingsPageProps) {
   const { refreshSettings } = useCompanySettings();
   const [loading, setLoading] = useState(false);
-  const [companyName, setCompanyName] = useState('');
-  const [branchName, setBranchName] = useState('');
-  const [taxId, setTaxId] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [companyName, setCompanyName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,19 +50,19 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
       setLoading(true);
       const settings = await companySettingService.get();
       setCompanyName(settings.company_name);
-      setBranchName(settings.branch_name || '');
+      setBranchName(settings.branch_name || "");
       setTaxId(settings.tax_id);
       setAddress(settings.address);
-      setPhone(settings.phone || '');
-      setEmail(settings.email || '');
+      setPhone(settings.phone || "");
+      setEmail(settings.email || "");
       setLogo(settings.logo || null);
       setEnableEmail(settings.enable_email);
       setEnableSMS(settings.enable_sms);
       setAutoBackup(settings.auto_backup);
       setVatRate(Number(settings.vat_rate));
     } catch (error) {
-      console.error('Error loading settings:', error);
-      toast.error('ไม่สามารถโหลดข้อมูลได้');
+      console.error("Error loading settings:", error);
+      toast.error("ไม่สามารถโหลดข้อมูลได้");
     } finally {
       setLoading(false);
     }
@@ -66,11 +72,11 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        toast.error('ขนาดไฟล์ต้องไม่เกิน 2MB');
+        toast.error("ขนาดไฟล์ต้องไม่เกิน 2MB");
         return;
       }
-      if (!file.type.startsWith('image/')) {
-        toast.error('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      if (!file.type.startsWith("image/")) {
+        toast.error("กรุณาเลือกไฟล์รูปภาพเท่านั้น");
         return;
       }
       setLogoFile(file);
@@ -86,7 +92,7 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
     setLogo(null);
     setLogoFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -102,12 +108,12 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
         email: email,
         logo: logo || undefined,
       });
-      toast.success('บันทึกข้อมูลบริษัทสำเร็จ');
+      toast.success("บันทึกข้อมูลบริษัทสำเร็จ");
       await loadSettings();
       await refreshSettings(); // Refresh global context
     } catch (error) {
-      console.error('Error saving company settings:', error);
-      toast.error('ไม่สามารถบันทึกข้อมูลได้');
+      console.error("Error saving company settings:", error);
+      toast.error("ไม่สามารถบันทึกข้อมูลได้");
     } finally {
       setLoading(false);
     }
@@ -128,18 +134,18 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
         auto_backup: autoBackup,
         vat_rate: vatRate,
       });
-      toast.success('บันทึกการตั้งค่าระบบสำเร็จ');
+      toast.success("บันทึกการตั้งค่าระบบสำเร็จ");
       await loadSettings();
       await refreshSettings(); // Refresh global context
     } catch (error) {
-      console.error('Error saving system settings:', error);
-      toast.error('ไม่สามารถบันทึกข้อมูลได้');
+      console.error("Error saving system settings:", error);
+      toast.error("ไม่สามารถบันทึกข้อมูลได้");
     } finally {
       setLoading(false);
     }
   };
 
-  if (userRole !== 'admin') {
+  if (userRole !== "admin") {
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="w-full max-w-md">
@@ -167,7 +173,9 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
           <Card>
             <CardHeader>
               <CardTitle>ข้อมูลบริษัท</CardTitle>
-              <CardDescription>จัดการข้อมูลบริษัทและรายละเอียดติดต่อ</CardDescription>
+              <CardDescription>
+                จัดการข้อมูลบริษัทและรายละเอียดติดต่อ
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -286,7 +294,7 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
               <Separator />
               <div className="flex justify-end">
                 <Button onClick={handleSaveCompany} disabled={loading}>
-                  {loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
+                  {loading ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
                 </Button>
               </div>
             </CardContent>
@@ -304,11 +312,15 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
                 <Checkbox
                   id="enableEmail"
                   checked={enableEmail}
-                  onCheckedChange={(checked) => setEnableEmail(checked === true)}
+                  onCheckedChange={(checked) =>
+                    setEnableEmail(checked === true)
+                  }
                   disabled={loading}
                 />
                 <div className="flex-1 space-y-1">
-                  <Label htmlFor="enableEmail" className="cursor-pointer">การแจ้งเตือนทางอีเมล</Label>
+                  <Label htmlFor="enableEmail" className="cursor-pointer">
+                    การแจ้งเตือนทางอีเมล
+                  </Label>
                   <p className="text-sm text-gray-500">
                     รับการแจ้งเตือนเกี่ยวกับเอกสารสำคัญทางอีเมล
                   </p>
@@ -325,7 +337,9 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
                   disabled={loading}
                 />
                 <div className="flex-1 space-y-1">
-                  <Label htmlFor="enableSMS" className="cursor-pointer">การแจ้งเตือนทาง SMS</Label>
+                  <Label htmlFor="enableSMS" className="cursor-pointer">
+                    การแจ้งเตือนทาง SMS
+                  </Label>
                   <p className="text-sm text-gray-500">
                     รับการแจ้งเตือนทาง SMS สำหรับรายการสำคัญ
                   </p>
@@ -342,7 +356,9 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
                   disabled={loading}
                 />
                 <div className="flex-1 space-y-1">
-                  <Label htmlFor="autoBackup" className="cursor-pointer">สำรองข้อมูลอัตโนมัติ</Label>
+                  <Label htmlFor="autoBackup" className="cursor-pointer">
+                    สำรองข้อมูลอัตโนมัติ
+                  </Label>
                   <p className="text-sm text-gray-500">
                     ระบบจะสำรองข้อมูลอัตโนมัติทุกวันเวลา 00:00 น.
                   </p>
@@ -365,7 +381,7 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
 
               <div className="flex justify-end">
                 <Button onClick={handleSaveSystem} disabled={loading}>
-                  {loading ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+                  {loading ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}
                 </Button>
               </div>
             </CardContent>
@@ -376,7 +392,9 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
           <Card>
             <CardHeader>
               <CardTitle>ความปลอดภัย</CardTitle>
-              <CardDescription>จัดการการตั้งค่าความปลอดภัยของระบบ</CardDescription>
+              <CardDescription>
+                จัดการการตั้งค่าความปลอดภัยของระบบ
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -406,7 +424,11 @@ export default function SettingsPage({ userRole }: SettingsPageProps) {
 
               <div className="flex justify-end gap-2">
                 <Button variant="outline">ยกเลิก</Button>
-                <Button onClick={() => toast.success('บันทึกการตั้งค่าความปลอดภัยสำเร็จ')}>
+                <Button
+                  onClick={() =>
+                    toast.success("บันทึกการตั้งค่าความปลอดภัยสำเร็จ")
+                  }
+                >
                   บันทึกการเปลี่ยนแปลง
                 </Button>
               </div>

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import type { UserRole } from '../../types';
-import { customerService } from '../../services/customerService';
-import type { Customer as ApiCustomer } from '../../services/customerService';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { useState, useEffect } from "react";
+import type { UserRole } from "../../types";
+import { customerService } from "../../services/customerService";
+import type { Customer as ApiCustomer } from "../../services/customerService";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import {
   Table,
   TableBody,
@@ -11,17 +11,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Edit, Trash2, Eye, Search, Building, Users, Handshake, UserCheck, UserX } from 'lucide-react';
-import { Badge } from '../ui/badge';
+} from "../ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Search,
+  Building,
+  Users,
+  Handshake,
+  UserCheck,
+  UserX,
+} from "lucide-react";
+import { Badge } from "../ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from "../ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,12 +42,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import { Checkbox } from '../ui/checkbox';
-import { toast } from 'sonner';
+} from "../ui/alert-dialog";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Textarea } from "../ui/textarea";
+import { Checkbox } from "../ui/checkbox";
+import { toast } from "sonner";
 
 interface CustomerPageProps {
   userRole: UserRole;
@@ -44,31 +61,31 @@ interface CustomerPageProps {
 
 export default function CustomerPage({ userRole }: CustomerPageProps) {
   const [data, setData] = useState<ApiCustomer[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ApiCustomer | null>(null);
   const [formData, setFormData] = useState({
-    code: '',
-    name: '',
-    type: 'ลูกค้า' as 'ลูกค้า' | 'คู่ค้า' | 'ทั้งคู่ค้าและลูกค้า',
-    branchName: '',
-    taxId: '',
-    contactPerson: '',
-    contact: '',
-    email: '',
-    address: '',
-    note: '',
-    accountName: '',
-    accountNumber: '',
-    bankName: '',
+    code: "",
+    name: "",
+    type: "ลูกค้า" as "ลูกค้า" | "คู่ค้า" | "ทั้งคู่ค้าและลูกค้า",
+    branchName: "",
+    taxId: "",
+    contactPerson: "",
+    contact: "",
+    email: "",
+    address: "",
+    note: "",
+    accountName: "",
+    accountNumber: "",
+    bankName: "",
     status: true,
   });
 
-  const canEdit = userRole === 'admin' || userRole === 'account';
-  const canDelete = userRole === 'admin' || userRole === 'account';
+  const canEdit = userRole === "admin" || userRole === "account";
+  const canDelete = userRole === "admin" || userRole === "account";
 
   useEffect(() => {
     fetchCustomers();
@@ -79,59 +96,61 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
       const customers = await customerService.getAll();
       setData(customers);
     } catch (error) {
-      console.error('Error loading customers:', error);
-      toast.error('ไม่สามารถโหลดข้อมูลลูกค้าได้');
+      console.error("Error loading customers:", error);
+      toast.error("ไม่สามารถโหลดข้อมูลลูกค้าได้");
     }
   };
 
   const generateNextCode = () => {
     if (data.length === 0) {
-      return 'CUS-0001';
+      return "CUS-0001";
     }
 
     // หารหัสที่มี CUS- เท่านั้น
     const cusCodes = data
-      .filter(c => c.code.startsWith('CUS-'))
-      .map(c => {
-        const num = parseInt(c.code.replace('CUS-', ''));
+      .filter((c) => c.code.startsWith("CUS-"))
+      .map((c) => {
+        const num = parseInt(c.code.replace("CUS-", ""));
         return isNaN(num) ? 0 : num;
       });
 
     const maxNum = cusCodes.length > 0 ? Math.max(...cusCodes) : 0;
     const nextNum = maxNum + 1;
-    return `CUS-${String(nextNum).padStart(4, '0')}`;
+    return `CUS-${String(nextNum).padStart(4, "0")}`;
   };
 
   const validateForm = () => {
     const errors: string[] = [];
 
     if (!formData.name.trim()) {
-      errors.push('กรุณากรอกชื่อลูกค้า/คู่ค้า');
+      errors.push("กรุณากรอกชื่อลูกค้า/คู่ค้า");
     }
 
     if (!formData.type) {
-      errors.push('กรุณาเลือกประเภท (ลูกค้า/คู่ค้า/ทั้งคู่)');
+      errors.push("กรุณาเลือกประเภท (ลูกค้า/คู่ค้า/ทั้งคู่)");
     }
 
     if (!formData.contact.trim()) {
-      errors.push('กรุณากรอกเบอร์โทรศัพท์');
-    } else if (!/^[0-9]{9,10}$/.test(formData.contact.replace(/-/g, ''))) {
-      errors.push('เบอร์โทรศัพท์ไม่ถูกต้อง (ต้องเป็นตัวเลข 9-10 หลัก)');
+      errors.push("กรุณากรอกเบอร์โทรศัพท์");
+    } else if (!/^[0-9]{9,10}$/.test(formData.contact.replace(/-/g, ""))) {
+      errors.push("เบอร์โทรศัพท์ไม่ถูกต้อง (ต้องเป็นตัวเลข 9-10 หลัก)");
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.push('รูปแบบอีเมลไม่ถูกต้อง');
+      errors.push("รูปแบบอีเมลไม่ถูกต้อง");
     }
 
     if (formData.taxId && formData.taxId.trim()) {
-      const taxIdClean = formData.taxId.replace(/-/g, '');
+      const taxIdClean = formData.taxId.replace(/-/g, "");
       if (!/^[0-9]{13}$/.test(taxIdClean)) {
-        errors.push('เลขประจำตัวผู้เสียภาษีไม่ถูกต้อง (ต้องเป็นตัวเลข 13 หลัก)');
+        errors.push(
+          "เลขประจำตัวผู้เสียภาษีไม่ถูกต้อง (ต้องเป็นตัวเลข 13 หลัก)"
+        );
       }
     }
 
     if (!formData.address.trim()) {
-      errors.push('กรุณากรอกที่อยู่');
+      errors.push("กรุณากรอกที่อยู่");
     }
 
     return errors;
@@ -142,7 +161,7 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
       // Validate form
       const errors = validateForm();
       if (errors.length > 0) {
-        errors.forEach(error => toast.error(error));
+        errors.forEach((error) => toast.error(error));
         return;
       }
 
@@ -163,50 +182,59 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
         account_name: formData.accountName,
         bank_account: formData.accountNumber,
         bank_name: formData.bankName,
-        status: formData.status ? 'active' : 'inactive',
+        status: formData.status ? "active" : "inactive",
       });
-      toast.success('เพิ่มลูกค้า/คู่ค้าสำเร็จ');
+      toast.success("เพิ่มลูกค้า/คู่ค้าสำเร็จ");
       setIsAddDialogOpen(false);
       fetchCustomers();
     } catch (error) {
       console.error(error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const response = (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response;
-        const errorMessage = response?.data?.message || 'ไม่สามารถเพิ่มลูกค้าได้';
+      if (error && typeof error === "object" && "response" in error) {
+        const response = (
+          error as {
+            response?: {
+              data?: { message?: string; errors?: Record<string, string[]> };
+            };
+          }
+        ).response;
+        const errorMessage =
+          response?.data?.message || "ไม่สามารถเพิ่มลูกค้าได้";
         const errorDetails = response?.data?.errors;
 
         if (errorDetails) {
-          Object.values(errorDetails).flat().forEach((msg) => toast.error(msg));
+          Object.values(errorDetails)
+            .flat()
+            .forEach((msg) => toast.error(msg));
         } else {
           toast.error(errorMessage);
         }
       } else {
-        toast.error('ไม่สามารถเพิ่มลูกค้าได้');
+        toast.error("ไม่สามารถเพิ่มลูกค้าได้");
       }
     }
   };
 
   const handleEdit = (item: ApiCustomer) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์แก้ไขข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์แก้ไขข้อมูล");
       return;
     }
     setSelectedItem(item);
     setFormData({
       code: item.code,
       name: item.name,
-      type: item.type as 'ลูกค้า' | 'คู่ค้า' | 'ทั้งคู่ค้าและลูกค้า',
-      branchName: item.branch_name || '',
-      taxId: item.tax_id || '',
-      contactPerson: item.contact_person || '',
+      type: item.type as "ลูกค้า" | "คู่ค้า" | "ทั้งคู่ค้าและลูกค้า",
+      branchName: item.branch_name || "",
+      taxId: item.tax_id || "",
+      contactPerson: item.contact_person || "",
       contact: item.phone,
       email: item.email,
-      address: item.address || '',
-      note: item.note || '',
-      accountName: item.account_name || '',
-      accountNumber: item.bank_account || '',
-      bankName: item.bank_name || '',
-      status: item.status === 'active',
+      address: item.address || "",
+      note: item.note || "",
+      accountName: item.account_name || "",
+      accountNumber: item.bank_account || "",
+      bankName: item.bank_name || "",
+      status: item.status === "active",
     });
     setIsEditDialogOpen(true);
   };
@@ -217,7 +245,7 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
     // Validate form
     const errors = validateForm();
     if (errors.length > 0) {
-      errors.forEach(error => toast.error(error));
+      errors.forEach((error) => toast.error(error));
       return;
     }
 
@@ -225,7 +253,7 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
       await customerService.update(selectedItem.id, {
         code: formData.code,
         name: formData.name,
-        type: formData.type as 'ลูกค้า' | 'คู่ค้า' | 'ทั้งคู่ค้าและลูกค้า',
+        type: formData.type as "ลูกค้า" | "คู่ค้า" | "ทั้งคู่ค้าและลูกค้า",
         branch_name: formData.branchName,
         tax_id: formData.taxId,
         contact_person: formData.contactPerson,
@@ -236,25 +264,34 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
         account_name: formData.accountName,
         bank_account: formData.accountNumber,
         bank_name: formData.bankName,
-        status: formData.status ? 'active' : 'inactive',
+        status: formData.status ? "active" : "inactive",
       });
-      toast.success('อัปเดตลูกค้าสำเร็จ');
+      toast.success("อัปเดตลูกค้าสำเร็จ");
       setIsEditDialogOpen(false);
       fetchCustomers();
     } catch (error) {
       console.error(error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const response = (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response;
-        const errorMessage = response?.data?.message || 'ไม่สามารถอัปเดตข้อมูลได้';
+      if (error && typeof error === "object" && "response" in error) {
+        const response = (
+          error as {
+            response?: {
+              data?: { message?: string; errors?: Record<string, string[]> };
+            };
+          }
+        ).response;
+        const errorMessage =
+          response?.data?.message || "ไม่สามารถอัปเดตข้อมูลได้";
         const errorDetails = response?.data?.errors;
 
         if (errorDetails) {
-          Object.values(errorDetails).flat().forEach((msg) => toast.error(msg));
+          Object.values(errorDetails)
+            .flat()
+            .forEach((msg) => toast.error(msg));
         } else {
           toast.error(errorMessage);
         }
       } else {
-        toast.error('ไม่สามารถอัปเดตข้อมูลได้');
+        toast.error("ไม่สามารถอัปเดตข้อมูลได้");
       }
     }
   };
@@ -266,7 +303,7 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
 
   const handleDeleteClick = (item: ApiCustomer) => {
     if (!canDelete) {
-      toast.error('คุณไม่มีสิทธิ์ลบข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์ลบข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -282,25 +319,29 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
       fetchCustomers();
     } catch (error) {
       console.error(error);
-      toast.error('ไม่สามารถลบลูกค้าได้');
+      toast.error("ไม่สามารถลบลูกค้าได้");
     }
   };
 
   const getTypeBadge = (type: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'outline'> = {
-      'ลูกค้า': 'default',
-      'คู่ค้า': 'secondary',
-      'ทั้งคู่ค้าและลูกค้า': 'outline',
+    const variants: Record<string, "default" | "secondary" | "outline"> = {
+      ลูกค้า: "default",
+      คู่ค้า: "secondary",
+      ทั้งคู่ค้าและลูกค้า: "outline",
     };
     return <Badge variant={variants[type]}>{type}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary'> = {
-      active: 'default',
-      inactive: 'secondary',
+    const variants: Record<string, "default" | "secondary"> = {
+      active: "default",
+      inactive: "secondary",
     };
-    return <Badge variant={variants[status]}>{status === 'active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}</Badge>;
+    return (
+      <Badge variant={variants[status]}>
+        {status === "active" ? "ใช้งาน" : "ไม่ใช้งาน"}
+      </Badge>
+    );
   };
 
   const filteredData = data.filter(
@@ -312,10 +353,12 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
   );
 
   const stats = {
-    ลูกค้า: data.filter((item) => item.type === 'ลูกค้า').length,
-    คู่ค้า: data.filter((item) => item.type === 'คู่ค้า').length,
-    ทั้งคู่ค้าและลูกค้า: data.filter((item) => item.type === 'ทั้งคู่ค้าและลูกค้า').length,
-    ไม่ใช้งาน: data.filter((item) => item.status === 'inactive').length,
+    ลูกค้า: data.filter((item) => item.type === "ลูกค้า").length,
+    คู่ค้า: data.filter((item) => item.type === "คู่ค้า").length,
+    ทั้งคู่ค้าและลูกค้า: data.filter(
+      (item) => item.type === "ทั้งคู่ค้าและลูกค้า"
+    ).length,
+    ไม่ใช้งาน: data.filter((item) => item.status === "inactive").length,
   };
 
   return (
@@ -375,26 +418,28 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>ลูกค้า/คู่ค้า</CardTitle>
-            <Button onClick={() => {
-              const nextCode = generateNextCode();
-              setFormData({
-                code: nextCode,
-                name: '',
-                type: 'ลูกค้า',
-                taxId: '',
-                branchName: '',
-                contact: '',
-                email: '',
-                address: '',
-                contactPerson: '',
-                note: '',
-                accountName: '',
-                accountNumber: '',
-                bankName: '',
-                status: true,
-              });
-              setIsAddDialogOpen(true);
-            }}>
+            <Button
+              onClick={() => {
+                const nextCode = generateNextCode();
+                setFormData({
+                  code: nextCode,
+                  name: "",
+                  type: "ลูกค้า",
+                  taxId: "",
+                  branchName: "",
+                  contact: "",
+                  email: "",
+                  address: "",
+                  contactPerson: "",
+                  note: "",
+                  accountName: "",
+                  accountNumber: "",
+                  bankName: "",
+                  status: true,
+                });
+                setIsAddDialogOpen(true);
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
               เพิ่มลูกค้า/คู่ค้า
             </Button>
@@ -437,13 +482,17 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                     </div>
                   </TableCell>
                   <TableCell>{getTypeBadge(item.type)}</TableCell>
-                  <TableCell>{item.contact_person || '-'}</TableCell>
+                  <TableCell>{item.contact_person || "-"}</TableCell>
                   <TableCell>{item.phone}</TableCell>
                   <TableCell>{item.email}</TableCell>
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleView(item)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(item)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
@@ -493,9 +542,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Label>ประเภท</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value: 'ลูกค้า' | 'คู่ค้า' | 'ทั้งสองอย่าง') =>
-                    setFormData({ ...formData, type: value })
-                  }
+                  onValueChange={(
+                    value: "ลูกค้า" | "คู่ค้า" | "ทั้งสองอย่าง"
+                  ) => setFormData({ ...formData, type: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -514,7 +563,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
               <Input
                 placeholder="ชื่อบริษัทหรือร้าน"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </div>
 
@@ -524,7 +575,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="เช่น สำนักงานใหญ่"
                   value={formData.branchName}
-                  onChange={(e) => setFormData({ ...formData, branchName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, branchName: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -532,7 +585,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="0105558123456"
                   value={formData.taxId}
-                  onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, taxId: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -543,7 +598,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="คุณสมชาย"
                   value={formData.contactPerson}
-                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contactPerson: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -551,7 +608,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="02-XXX-XXXX"
                   value={formData.contact}
-                  onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contact: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -562,7 +621,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 type="email"
                 placeholder="email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
               />
             </div>
 
@@ -572,7 +633,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 placeholder="ที่อยู่เต็ม"
                 rows={3}
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
               />
             </div>
 
@@ -582,7 +645,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 placeholder="หมายเหตุเพิ่มเติม"
                 rows={2}
                 value={formData.note}
-                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, note: e.target.value })
+                }
               />
             </div>
 
@@ -595,7 +660,12 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                     <Input
                       placeholder="ชื่อบัญชี"
                       value={formData.accountName}
-                      onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          accountName: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -603,7 +673,12 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                     <Input
                       placeholder="XXX-XXX-XXXX"
                       value={formData.accountNumber}
-                      onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          accountNumber: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -612,7 +687,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                   <Input
                     placeholder="ธนาคาร..."
                     value={formData.bankName}
-                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, bankName: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -623,12 +700,19 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Checkbox
                   id="status-add"
                   checked={formData.status}
-                  onCheckedChange={(checked) => setFormData({ ...formData, status: checked as boolean })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, status: checked as boolean })
+                  }
                 />
-                <Label htmlFor="status-add" className="cursor-pointer">ใช้งาน</Label>
+                <Label htmlFor="status-add" className="cursor-pointer">
+                  ใช้งาน
+                </Label>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
                   ยกเลิก
                 </Button>
                 <Button onClick={handleAdd}>บันทึก</Button>
@@ -643,7 +727,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>แก้ไขลูกค้า/คู่ค้า</DialogTitle>
-            <DialogDescription>แก้ไขข้อมูล {selectedItem?.name}</DialogDescription>
+            <DialogDescription>
+              แก้ไขข้อมูล {selectedItem?.name}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -652,16 +738,18 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="CUST-XXX, SUPP-XXX หรือ BOTH-XXX"
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, code: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label>ประเภท</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={(value: 'ลูกค้า' | 'คู่ค้า' | 'ทั้งคู่ค้าและลูกค้า') =>
-                    setFormData({ ...formData, type: value })
-                  }
+                  onValueChange={(
+                    value: "ลูกค้า" | "คู่ค้า" | "ทั้งคู่ค้าและลูกค้า"
+                  ) => setFormData({ ...formData, type: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -669,7 +757,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                   <SelectContent>
                     <SelectItem value="ลูกค้า">ลูกค้า</SelectItem>
                     <SelectItem value="คู่ค้า">คู่ค้า</SelectItem>
-                    <SelectItem value="ทั้งคู่ค้าและลูกค้า">ทั้งคู่ค้าและลูกค้า</SelectItem>
+                    <SelectItem value="ทั้งคู่ค้าและลูกค้า">
+                      ทั้งคู่ค้าและลูกค้า
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -680,7 +770,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
               <Input
                 placeholder="ชื่อบริษัทหรือร้าน"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </div>
 
@@ -690,7 +782,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="เช่น สำนักงานใหญ่"
                   value={formData.branchName}
-                  onChange={(e) => setFormData({ ...formData, branchName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, branchName: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -698,7 +792,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="0105558123456"
                   value={formData.taxId}
-                  onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, taxId: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -709,7 +805,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="คุณสมชาย"
                   value={formData.contactPerson}
-                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contactPerson: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -717,7 +815,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Input
                   placeholder="02-XXX-XXXX"
                   value={formData.contact}
-                  onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contact: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -728,7 +828,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 type="email"
                 placeholder="email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
               />
             </div>
 
@@ -738,7 +840,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 placeholder="ที่อยู่เต็ม"
                 rows={3}
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
               />
             </div>
 
@@ -748,7 +852,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 placeholder="หมายเหตุเพิ่มเติม"
                 rows={2}
                 value={formData.note}
-                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, note: e.target.value })
+                }
               />
             </div>
 
@@ -761,7 +867,12 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                     <Input
                       placeholder="ชื่อบัญชี"
                       value={formData.accountName}
-                      onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          accountName: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -769,7 +880,12 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                     <Input
                       placeholder="XXX-XXX-XXXX"
                       value={formData.accountNumber}
-                      onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          accountNumber: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -778,7 +894,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                   <Input
                     placeholder="ธนาคาร..."
                     value={formData.bankName}
-                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, bankName: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -789,12 +907,19 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 <Checkbox
                   id="status-edit"
                   checked={formData.status}
-                  onCheckedChange={(checked) => setFormData({ ...formData, status: checked as boolean })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, status: checked as boolean })
+                  }
                 />
-                <Label htmlFor="status-edit" className="cursor-pointer">ใช้งาน</Label>
+                <Label htmlFor="status-edit" className="cursor-pointer">
+                  ใช้งาน
+                </Label>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
                   ยกเลิก
                 </Button>
                 <Button onClick={handleUpdate}>บันทึกการเปลี่ยนแปลง</Button>
@@ -836,47 +961,50 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
                 </div>
               )}
 
-            {selectedItem?.tax_id && (
-  <div>
-    <Label className="text-gray-500">เลขประจำตัวผู้เสียภาษี</Label>
-    <p className="mt-1">{selectedItem?.tax_id}</p>
-  </div>
-)}
+              {selectedItem?.tax_id && (
+                <div>
+                  <Label className="text-gray-500">
+                    เลขประจำตัวผู้เสียภาษี
+                  </Label>
+                  <p className="mt-1">{selectedItem?.tax_id}</p>
+                </div>
+              )}
 
-<div className="grid grid-cols-2 gap-4">
-  {selectedItem?.contact_person && (
-    <div>
-      <Label className="text-gray-500">ชื่อผู้ติดต่อ</Label>
-      <p className="mt-1">{selectedItem?.contact_person}</p>
-    </div>
-  )}
-  <div>
-    <Label className="text-gray-500">เบอร์ติดต่อ</Label>
-    <p className="mt-1">{selectedItem?.phone}</p>
-  </div>
-</div>
+              <div className="grid grid-cols-2 gap-4">
+                {selectedItem?.contact_person && (
+                  <div>
+                    <Label className="text-gray-500">ชื่อผู้ติดต่อ</Label>
+                    <p className="mt-1">{selectedItem?.contact_person}</p>
+                  </div>
+                )}
+                <div>
+                  <Label className="text-gray-500">เบอร์ติดต่อ</Label>
+                  <p className="mt-1">{selectedItem?.phone}</p>
+                </div>
+              </div>
 
-<div>
-  <Label className="text-gray-500">อีเมล</Label>
-  <p className="mt-1">{selectedItem?.email}</p>
-</div>
+              <div>
+                <Label className="text-gray-500">อีเมล</Label>
+                <p className="mt-1">{selectedItem?.email}</p>
+              </div>
 
-{selectedItem?.address && (
-  <div>
-    <Label className="text-gray-500">ที่อยู่</Label>
-    <p className="mt-1">{selectedItem?.address}</p>
-  </div>
-)}
+              {selectedItem?.address && (
+                <div>
+                  <Label className="text-gray-500">ที่อยู่</Label>
+                  <p className="mt-1">{selectedItem?.address}</p>
+                </div>
+              )}
 
-{selectedItem?.note && (
-  <div>
-    <Label className="text-gray-500">หมายเหตุ</Label>
-    <p className="mt-1">{selectedItem?.note}</p>
-  </div>
-)}
+              {selectedItem?.note && (
+                <div>
+                  <Label className="text-gray-500">หมายเหตุ</Label>
+                  <p className="mt-1">{selectedItem?.note}</p>
+                </div>
+              )}
 
-
-              {(selectedItem.account_name || selectedItem.bank_account || selectedItem.bank_name) && (
+              {(selectedItem.account_name ||
+                selectedItem.bank_account ||
+                selectedItem.bank_name) && (
                 <div className="pt-4 border-t">
                   <h3 className="mb-3">ข้อมูลบัญชีธนาคาร</h3>
                   {selectedItem.account_name && (
@@ -902,7 +1030,9 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
 
               <div>
                 <Label className="text-gray-500">สถานะ</Label>
-                <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                <div className="mt-1">
+                  {getStatusBadge(selectedItem.status)}
+                </div>
               </div>
 
               <div className="flex justify-end">
@@ -914,18 +1044,23 @@ export default function CustomerPage({ userRole }: CustomerPageProps) {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบลูกค้า/คู่ค้า &quot;{selectedItem?.name}&quot;?
-              การดำเนินการนี้ไม่สามารถยกเลิกได้
+              คุณแน่ใจหรือไม่ว่าต้องการลบลูกค้า/คู่ค้า &quot;
+              {selectedItem?.name}&quot;? การดำเนินการนี้ไม่สามารถยกเลิกได้
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>ลบ</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              ลบ
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

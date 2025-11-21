@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Card, CardContent } from './ui/card';
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Card, CardContent } from "./ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from "./ui/select";
 import {
   Table,
   TableBody,
@@ -18,15 +18,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table';
-import { Plus, Trash2 } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { customerService } from '../services/customerService';
-import type { Customer } from '../services/customerService';
-import { productService } from '../services/productService';
-import type { Product } from '../services/productService';
-import { toast } from 'sonner';
+} from "./ui/table";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { customerService } from "../services/customerService";
+import type { Customer } from "../services/customerService";
+import { productService } from "../services/productService";
+import type { Product } from "../services/productService";
+import { toast } from "sonner";
 
 interface VoucherItem {
   id: string;
@@ -48,27 +55,40 @@ export default function PaymentVoucherForm({
   editData,
   isEditMode = false,
 }: PaymentVoucherFormProps) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   const [voucherNo, setVoucherNo] = useState(() => {
-    return `PV${Date.now().toString().slice(-6)}`;
+    // Start with a fallback, but we will compute a proper sequential number in useEffect
+    return `PV${new Date().getFullYear().toString()}0001`;
   });
+
+  // Helper to generate next doc number: PREFIX + YEAR + 4-digit seq
+  const generateDocNumber = (prefix: string, lastDocNumber = 0) => {
+    const currentYear = new Date().getFullYear().toString();
+    return `${prefix}${currentYear}${(lastDocNumber + 1)
+      .toString()
+      .padStart(4, "0")}`;
+  };
   const [voucherDate, setVoucherDate] = useState(today);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [openCustomer, setOpenCustomer] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<VoucherItem[]>([]);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState(0);
   const [vatRate, setVatRate] = useState(7);
 
   // ข้อมูลเพิ่มเติม
-  const [paymentMethod, setPaymentMethod] = useState('โอนเงิน');
+  const [paymentMethod, setPaymentMethod] = useState("โอนเงิน");
   const [paymentDate, setPaymentDate] = useState(today);
-  const [taxType, setTaxType] = useState<'excluding' | 'including' | 'none'>('excluding');
-  const [salesperson, setSalesperson] = useState('');
-  const [withholdingTaxNo, setWithholdingTaxNo] = useState('');
+  const [taxType, setTaxType] = useState<"excluding" | "including" | "none">(
+    "excluding"
+  );
+  const [salesperson, setSalesperson] = useState("");
+  const [withholdingTaxNo, setWithholdingTaxNo] = useState("");
   const [withholdingTaxAmount, setWithholdingTaxAmount] = useState(0);
 
   // โหลดข้อมูลลูกค้าและสินค้าจากฐานข้อมูล
@@ -77,28 +97,30 @@ export default function PaymentVoucherForm({
       try {
         const [customerList, productList] = await Promise.all([
           customerService.getActiveCustomers(),
-          productService.getAll()
+          productService.getAll(),
         ]);
         setCustomers(customerList);
         setProducts(productList);
 
         // โหลดข้อมูลสำหรับ edit mode
         if (isEditMode && editData) {
-          setVoucherNo(editData.voucher_no || '');
+          setVoucherNo(editData.voucher_no || "");
           setVoucherDate(editData.date || today);
-          setPaymentMethod(editData.payment_method || 'โอนเงิน');
+          setPaymentMethod(editData.payment_method || "โอนเงิน");
           setPaymentDate(editData.payment_date || today);
-          setTaxType(editData.tax_type || 'excluding');
-          setSalesperson(editData.salesperson || '');
-          setWithholdingTaxNo(editData.withholding_tax_no || '');
+          setTaxType(editData.tax_type || "excluding");
+          setSalesperson(editData.salesperson || "");
+          setWithholdingTaxNo(editData.withholding_tax_no || "");
           setWithholdingTaxAmount(Number(editData.withholding_tax_amount) || 0);
-          setNotes(editData.notes || '');
+          setNotes(editData.notes || "");
           setDiscount(Number(editData.discount) || 0);
           setVatRate(Number(editData.vat_rate) || 7);
 
           // ตั้งค่าผู้รับเงิน
           if (editData.payee_id) {
-            const customer = customerList.find(c => c.id === editData.payee_id);
+            const customer = customerList.find(
+              (c) => c.id === editData.payee_id
+            );
             if (customer) {
               setSelectedCustomer(customer);
             }
@@ -108,26 +130,55 @@ export default function PaymentVoucherForm({
           if (editData.items) {
             try {
               // แปลง JSON string กลับเป็น array
-              const itemsArray = typeof editData.items === 'string'
-                ? JSON.parse(editData.items)
-                : editData.items;
+              const itemsArray =
+                typeof editData.items === "string"
+                  ? JSON.parse(editData.items)
+                  : editData.items;
 
               if (Array.isArray(itemsArray) && itemsArray.length > 0) {
-                setItems(itemsArray.map((item: any) => ({
-                  id: item.id?.toString() || Date.now().toString(),
-                  productId: item.productId || item.product_id,
-                  description: item.description || '',
-                  amount: Number(item.amount) || 0,
-                })));
+                setItems(
+                  itemsArray.map((item: any) => ({
+                    id: item.id?.toString() || Date.now().toString(),
+                    productId: item.productId || item.product_id,
+                    description: item.description || "",
+                    amount: Number(item.amount) || 0,
+                  }))
+                );
               }
             } catch (error) {
-              console.error('Error parsing items:', error);
+              console.error("Error parsing items:", error);
             }
           }
         }
       } catch (error) {
-        console.error('Error loading data:', error);
-        toast.error('ไม่สามารถโหลดข้อมูลได้');
+        console.error("Error loading data:", error);
+        toast.error("ไม่สามารถโหลดข้อมูลได้");
+      }
+      // ถ้าไม่ใช่ edit mode ให้คำนวณเลขเอกสารถัดไป (PV{year}{seq})
+      if (!isEditMode) {
+        try {
+          const res = await fetch("http://127.0.0.1:8000/api/payment-vouchers");
+          if (res.ok) {
+            const arr = await res.json();
+            const year = new Date().getFullYear().toString();
+            const regex = new RegExp(`^PV${year}(\\d{4})$`);
+            let maxSeq = 0;
+            const dataArray = Array.isArray(arr) ? arr : arr.data || [];
+            dataArray.forEach((doc: any) => {
+              const n = doc.voucher_no || doc.voucherNo || doc.voucher_no;
+              if (typeof n === "string") {
+                const m = n.match(regex);
+                if (m) {
+                  const num = parseInt(m[1], 10);
+                  if (!isNaN(num) && num > maxSeq) maxSeq = num;
+                }
+              }
+            });
+            setVoucherNo(generateDocNumber("PV", maxSeq));
+          }
+        } catch (err) {
+          // keep fallback
+        }
       }
     };
     loadData();
@@ -136,7 +187,7 @@ export default function PaymentVoucherForm({
   const handleAddItem = () => {
     const newItem: VoucherItem = {
       id: Date.now().toString(),
-      description: '',
+      description: "",
       amount: 0,
     };
     setItems([...items, newItem]);
@@ -157,12 +208,16 @@ export default function PaymentVoucherForm({
     );
   };
 
-  const handleItemChange = (itemId: string, field: keyof VoucherItem, value: any) => {
+  const handleItemChange = (
+    itemId: string,
+    field: keyof VoucherItem,
+    value: any
+  ) => {
     setItems(
       items.map((item) => {
         if (item.id === itemId) {
           // Convert amount to number
-          if (field === 'amount') {
+          if (field === "amount") {
             return { ...item, [field]: Number(value) || 0 };
           }
           return { ...item, [field]: value };
@@ -193,17 +248,21 @@ export default function PaymentVoucherForm({
   };
 
   const calculateGrandTotal = () => {
-    return calculateAfterDiscount() + calculateVat() - Number(withholdingTaxAmount || 0);
+    return (
+      calculateAfterDiscount() +
+      calculateVat() -
+      Number(withholdingTaxAmount || 0)
+    );
   };
 
   const handleSave = async () => {
     if (!selectedCustomer) {
-      toast.error('กรุณาเลือกผู้รับเงิน');
+      toast.error("กรุณาเลือกผู้รับเงิน");
       return;
     }
 
     if (items.length === 0) {
-      toast.error('กรุณาเพิ่มรายการ');
+      toast.error("กรุณาเพิ่มรายการ");
       return;
     }
 
@@ -228,36 +287,48 @@ export default function PaymentVoucherForm({
       vat: calculateVat(),
       grand_total: calculateGrandTotal(),
       amount: calculateGrandTotal(),
-      status: isEditMode && editData?.status ? editData.status : 'รอจ่าย',
+      status: isEditMode && editData?.status ? editData.status : "รอจ่าย",
     };
 
     try {
-      const url = isEditMode && editData?.id
-        ? `http://127.0.0.1:8000/api/payment-vouchers/${editData.id}`
-        : 'http://127.0.0.1:8000/api/payment-vouchers';
+      const url =
+        isEditMode && editData?.id
+          ? `http://127.0.0.1:8000/api/payment-vouchers/${editData.id}`
+          : "http://127.0.0.1:8000/api/payment-vouchers";
 
-      const method = isEditMode ? 'PUT' : 'POST';
+      const method = isEditMode ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Backend error:', errorData);
-        throw new Error(errorData.message || `Failed to ${isEditMode ? 'update' : 'save'} payment voucher`);
+        console.error("Backend error:", errorData);
+        throw new Error(
+          errorData.message ||
+            `Failed to ${isEditMode ? "update" : "save"} payment voucher`
+        );
       }
 
-      toast.success(isEditMode ? 'แก้ไขใบสำคัญจ่ายเงินสำเร็จ' : 'บันทึกใบสำคัญจ่ายเงินสำเร็จ');
+      toast.success(
+        isEditMode
+          ? "แก้ไขใบสำคัญจ่ายเงินสำเร็จ"
+          : "บันทึกใบสำคัญจ่ายเงินสำเร็จ"
+      );
       onSave(data);
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'saving'} payment voucher:`, error);
-      console.error('Data being sent:', data);
-      const errorMessage = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการบันทึก';
+      console.error(
+        `Error ${isEditMode ? "updating" : "saving"} payment voucher:`,
+        error
+      );
+      console.error("Data being sent:", data);
+      const errorMessage =
+        error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการบันทึก";
       toast.error(errorMessage);
     }
   };
@@ -269,10 +340,12 @@ export default function PaymentVoucherForm({
           {/* Header */}
           <div className="pb-4 border-b">
             <h2 className="text-2xl font-bold text-red-600">
-              {isEditMode ? 'แก้ไขใบสำคัญจ่ายเงิน' : 'สร้างใบสำคัญจ่ายเงินใหม่'}
+              {isEditMode ? "แก้ไขใบสำคัญจ่ายเงิน" : "สร้างใบสำคัญจ่ายเงินใหม่"}
             </h2>
             <p className="text-sm text-gray-500">
-              {isEditMode ? 'แก้ไขข้อมูลใบสำคัญจ่ายเงิน' : 'กรอกข้อมูลใบสำคัญจ่ายเงิน'}
+              {isEditMode
+                ? "แก้ไขข้อมูลใบสำคัญจ่ายเงิน"
+                : "กรอกข้อมูลใบสำคัญจ่ายเงิน"}
             </p>
           </div>
 
@@ -280,11 +353,18 @@ export default function PaymentVoucherForm({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>เลขที่เอกสาร</Label>
-              <Input value={voucherNo} onChange={(e) => setVoucherNo(e.target.value)} />
+              <Input
+                value={voucherNo}
+                onChange={(e) => setVoucherNo(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>วันที่เอกสาร</Label>
-              <Input type="date" value={voucherDate} onChange={(e) => setVoucherDate(e.target.value)} />
+              <Input
+                type="date"
+                value={voucherDate}
+                onChange={(e) => setVoucherDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>วิธีการจ่ายเงิน</Label>
@@ -312,7 +392,9 @@ export default function PaymentVoucherForm({
                   aria-expanded={openCustomer}
                   className="justify-between w-full"
                 >
-                  {selectedCustomer ? selectedCustomer.name : 'เลือกผู้รับเงิน...'}
+                  {selectedCustomer
+                    ? selectedCustomer.name
+                    : "เลือกผู้รับเงิน..."}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[600px] p-0">
@@ -333,7 +415,7 @@ export default function PaymentVoucherForm({
                           <div>
                             <div className="font-medium">{customer.name}</div>
                             <div className="text-sm text-gray-500">
-                              {customer.code} | {customer.phone || '-'}
+                              {customer.code} | {customer.phone || "-"}
                             </div>
                           </div>
                         </CommandItem>
@@ -349,21 +431,23 @@ export default function PaymentVoucherForm({
           {selectedCustomer && (
             <div className="p-4 space-y-2 border rounded-lg bg-gray-50">
               <div className="space-y-1">
-                <div className="text-sm text-gray-600">เลขประจำตัวผู้เสียภาษี</div>
-                <div>{selectedCustomer.tax_id || '-'}</div>
+                <div className="text-sm text-gray-600">
+                  เลขประจำตัวผู้เสียภาษี
+                </div>
+                <div>{selectedCustomer.tax_id || "-"}</div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm text-gray-600">ที่อยู่</div>
-                <div>{selectedCustomer.address || '-'}</div>
+                <div>{selectedCustomer.address || "-"}</div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <div className="text-sm text-gray-600">เบอร์โทร</div>
-                  <div>{selectedCustomer.phone || '-'}</div>
+                  <div>{selectedCustomer.phone || "-"}</div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm text-gray-600">อีเมล</div>
-                  <div>{selectedCustomer.email || '-'}</div>
+                  <div>{selectedCustomer.email || "-"}</div>
                 </div>
               </div>
             </div>
@@ -385,27 +469,36 @@ export default function PaymentVoucherForm({
                   <TableRow className="bg-gray-100">
                     <TableHead className="w-[80px] text-center">#</TableHead>
                     <TableHead>รายการ</TableHead>
-                    <TableHead className="w-[150px] text-right">จำนวนเงิน</TableHead>
+                    <TableHead className="w-[150px] text-right">
+                      จำนวนเงิน
+                    </TableHead>
                     <TableHead className="w-[100px] text-center">ลบ</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-gray-400">
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-gray-400"
+                      >
                         ไม่มีรายการ
                       </TableCell>
                     </TableRow>
                   ) : (
                     items.map((item, index) => (
                       <TableRow key={item.id}>
-                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell className="text-center">
+                          {index + 1}
+                        </TableCell>
                         <TableCell>
                           <div className="space-y-2">
                             <Select
                               value={item.productId?.toString()}
                               onValueChange={(value) => {
-                                const product = products.find(p => p.id === parseInt(value));
+                                const product = products.find(
+                                  (p) => p.id === parseInt(value)
+                                );
                                 if (product) {
                                   handleSelectProduct(item.id, product);
                                 }
@@ -416,15 +509,27 @@ export default function PaymentVoucherForm({
                               </SelectTrigger>
                               <SelectContent>
                                 {products.map((product) => (
-                                  <SelectItem key={product.id} value={product.id.toString()}>
-                                    {product.name} - ฿{Number(product.sale_price).toLocaleString()}
+                                  <SelectItem
+                                    key={product.id}
+                                    value={product.id.toString()}
+                                  >
+                                    {product.name} - ฿
+                                    {Number(
+                                      product.sale_price
+                                    ).toLocaleString()}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                             <Textarea
                               value={item.description}
-                              onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  item.id,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
                               placeholder="รายละเอียด..."
                               rows={2}
                             />
@@ -433,8 +538,14 @@ export default function PaymentVoucherForm({
                         <TableCell>
                           <Input
                             type="number"
-                            value={item.amount || ''}
-                            onChange={(e) => handleItemChange(item.id, 'amount', e.target.value)}
+                            value={item.amount || ""}
+                            onChange={(e) =>
+                              handleItemChange(
+                                item.id,
+                                "amount",
+                                e.target.value
+                              )
+                            }
                             className="text-right"
                             min="0"
                             step="0.01"
@@ -462,11 +573,20 @@ export default function PaymentVoucherForm({
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>วันที่จ่ายเงิน</Label>
-              <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+              <Input
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>การคิดภาษี</Label>
-              <Select value={taxType} onValueChange={(value: 'excluding' | 'including' | 'none') => setTaxType(value)}>
+              <Select
+                value={taxType}
+                onValueChange={(value: "excluding" | "including" | "none") =>
+                  setTaxType(value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -490,7 +610,9 @@ export default function PaymentVoucherForm({
               <Input
                 type="number"
                 value={withholdingTaxAmount}
-                onChange={(e) => setWithholdingTaxAmount(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setWithholdingTaxAmount(parseFloat(e.target.value) || 0)
+                }
                 placeholder="0.00"
                 min="0"
                 step="0.01"
@@ -532,7 +654,9 @@ export default function PaymentVoucherForm({
                   <Input
                     type="number"
                     value={discount}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setDiscount(parseFloat(e.target.value) || 0)
+                    }
                     className="w-20 text-right"
                     min="0"
                     max="100"
@@ -555,7 +679,9 @@ export default function PaymentVoucherForm({
               </div>
               <div className="flex items-center justify-between text-red-600">
                 <span>หัก ณ ที่จ่าย</span>
-                <span>-{Number(withholdingTaxAmount || 0).toLocaleString()} บาท</span>
+                <span>
+                  -{Number(withholdingTaxAmount || 0).toLocaleString()} บาท
+                </span>
               </div>
               <div className="pt-3 border-t">
                 <div className="flex items-center justify-between text-lg font-bold">
@@ -570,10 +696,17 @@ export default function PaymentVoucherForm({
 
           {/* Action Buttons */}
           <div className="flex justify-start gap-2 pt-4 border-t">
-            <Button onClick={handleSave} className="bg-red-500 hover:bg-red-600">
+            <Button
+              onClick={handleSave}
+              className="bg-red-500 hover:bg-red-600"
+            >
               บันทึก
             </Button>
-            <Button variant="outline" onClick={onCancel} className="text-red-500 border-red-500">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="text-red-500 border-red-500"
+            >
               ยกเลิก
             </Button>
           </div>

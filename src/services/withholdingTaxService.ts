@@ -16,13 +16,21 @@ export interface WithholdingTax {
   doc_number: string;
   doc_date: string;
   sequence_number: string;
+  deduction_order?: string;
   payer_tax_id: string;
   payer_name: string;
+  payer_address?: string;
+  representative_tax_id?: string;
+  representative_name?: string;
+  representative_address?: string;
   recipient_tax_id: string;
   recipient_name: string;
   recipient_address: string;
   recipient_type: 'individual' | 'juristic' | 'partnership' | 'other';
   company_type?: '1' | '2' | '3' | '4' | '5' | 'other';
+  deduction_mode?: '' | 'wht' | 'always' | 'once' | 'other';
+  deduction_other?: string;
+  deduction_format?: '' | '1' | '2' | '3' | '4' | '5' | '6' | '7';
   items: TaxIncomeItem[];
   total_amount: number;
   total_tax: number;
@@ -37,13 +45,21 @@ export interface CreateWithholdingTaxData {
   doc_number: string;
   doc_date: string;
   sequence_number: string;
+  deduction_order?: string;
   payer_tax_id: string;
   payer_name: string;
+  payer_address?: string;
+  representative_tax_id?: string;
+  representative_name?: string;
+  representative_address?: string;
   recipient_tax_id: string;
   recipient_name: string;
   recipient_address: string;
   recipient_type: 'individual' | 'juristic' | 'partnership' | 'other';
   company_type?: '1' | '2' | '3' | '4' | '5' | 'other';
+  deduction_mode?: '' | 'wht' | 'always' | 'once' | 'other';
+  deduction_other?: string;
+  deduction_format?: '' | '1' | '2' | '3' | '4' | '5' | '6' | '7';
   items: Omit<TaxIncomeItem, 'id'>[];
   total_amount: number;
   total_tax: number;
@@ -100,11 +116,18 @@ class WithholdingTaxService {
       sequence_number: currentData.sequence_number,
       payer_tax_id: currentData.payer_tax_id,
       payer_name: currentData.payer_name,
+      payer_address: currentData.payer_address,
+      representative_tax_id: currentData.representative_tax_id,
+      representative_name: currentData.representative_name,
+      representative_address: currentData.representative_address,
       recipient_tax_id: currentData.recipient_tax_id,
       recipient_name: currentData.recipient_name,
       recipient_address: currentData.recipient_address,
       recipient_type: currentData.recipient_type,
       company_type: currentData.company_type,
+      deduction_mode: currentData.deduction_mode,
+      deduction_other: currentData.deduction_other,
+      deduction_format: currentData.deduction_format,
       items: currentData.items.map(item => ({
         type: item.type,
         description: item.description,

@@ -1,0 +1,606 @@
+/* Invoice Detail Page - readable CSS */
+/* Variables for easy customization */
+:root{
+  --viewer-bg: #525659; /* page viewer background */
+  --toolbar-bg: #323639;
+  --toolbar-border: #3f4447;
+  --toolbar-btn-bg: #424548;
+  --toolbar-primary: #3b82f6;
+  --paper-bg: #ffffff;
+  --stripe-original: #ff0000;
+  --stripe-copy: #808080;
+  --paper-shadow: 0 0 20px rgba(0,0,0,0.5);
+  --table-border: #000;
+}
+/* Force the page size to 23cm x 28cm. This tells paged media and browsers the intended size. */
+@page {
+  size: 23cm 28cm portrait;
+  margin: 0mm;
+}
+/* Page background to emulate PDF viewer */
+.invoice-detail {
+  min-height: 100vh;
+  background: var(--viewer-bg);
+}
+
+/* Toolbar shown on screen only */
+.invoice-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
+}
+
+.toolbar-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toolbar-btn {
+  background: var(--toolbar-btn-bg);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.toolbar-btn.primary {
+  background: var(--toolbar-primary);
+  border-color: rgba(0,0,0,0.12);
+}
+
+/* Document wrapper and paper */
+.doc-wrap { padding: 32px 0; }
+.invoice-document {
+  /* Exact sheet size: 23cm x 28cm */
+  width: 23cm;
+  height: 28cm;
+  box-sizing: border-box; /* include padding in size calculations */
+  margin: 0 auto;
+  background: var(--paper-bg);
+  position: relative;
+  box-shadow: var(--paper-shadow);
+  overflow: hidden;
+}
+
+.invoice-document-content { 
+  padding: 0; 
+  position: relative; /* Makes this the reference point for absolute positioning */
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== ADJUST ALL POSITIONS HERE ===== */
+
+/* Header Section */
+.pos-title-thai {
+  position: absolute;
+  left: 16cm;
+  top: 1.1cm;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.pos-title-english {
+  position: absolute;
+  left: 16cm;
+  top: 2cm;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Customer Info Section */
+.pos-customer-name {
+  position: absolute;
+  left: 1.6cm;
+  top: 2.9cm;
+  font-size: 14px;
+}
+
+.pos-invoice-no {
+  position: absolute;
+  left: 12.6cm;
+  top: 2.9cm;
+  font-size: 14px;
+}
+
+.pos-invoice-date {
+  position: absolute;
+  left: 18cm;
+  top: 2.9cm;
+  font-size: 14px;
+}
+
+/* กล่องรวมข้อมูลลูกค้า */
+.pos-customer-block {
+  position: absolute;
+  left: 0.7cm;
+  top: 3.8cm;
+  font-size: 13px;
+  width: 10cm;
+  line-height: 1.5;
+}
+
+.pos-customer-line {
+  margin: 0.1cm 0;
+  line-height: 1.5;
+}
+
+.pos-date-block {
+  position: absolute;
+  left: 11.7cm;
+  top: 3.8cm;
+  font-size: 13px;
+  width: 9cm;
+  line-height: 1.5;
+}
+
+.pos-date-line {
+  margin: 0.1cm 0;
+  line-height: 1.5;
+}
+
+
+
+.pos-customer-address {
+  position: absolute;
+  text-indent: 1.5em;
+  left: 1cm;
+  top: 6cm;
+  font-size: 12px;
+  width: 9.8cm;
+}
+
+.pos-customer-phone {
+  position: absolute;
+  left: 2cm;
+  top: 6.5cm;
+  font-size: 12px;
+}
+
+.pos-customer-email {
+  position: absolute;
+  left: 2cm;
+  top: 7cm;
+  font-size: 12px;
+}
+
+.pos-customer-tax {
+  position: absolute;
+  left: 2cm;
+  top: 7.5cm;
+  font-size: 12px;
+}
+
+/* Right Side Info */
+.pos-issue-date {
+  position: absolute;
+  left: 12cm;
+  top: 6cm;
+  font-size: 12px;
+}
+
+.pos-reference-doc {
+  position: absolute;
+  left: 12cm;
+  top: 6.5cm;
+  font-size: 12px;
+}
+
+.pos-salesperson {
+  position: absolute;
+  left: 12cm;
+  top: 7cm;
+  font-size: 12px;
+}
+
+/* Items Table */
+.pos-items-table {
+  position: absolute;
+  left: 1cm;
+  top: 7.4cm;
+  width: 21cm;
+  border-collapse: collapse;
+  font-size: 14px;
+  border: none;
+}
+
+/* Remove all borders */
+.pos-items-table th,
+.pos-items-table td {
+  border: none;
+}
+
+
+/* Footer Section */
+.pos-notes {
+  position: absolute;
+  left: 0.8cm;
+  top: 24.3cm;
+  font-size: 11px;
+  width: 8cm;
+}
+
+.pos-signature-1 {
+  position: absolute;
+  left: 9.2cm;
+  top: 24.25cm;
+  font-size: 14px;
+  text-align: center;
+  width: 5cm;
+}
+
+.pos-signature-2 {
+  position: absolute;
+  left: 13cm;
+  top: 24.25cm;
+  font-size: 14px;
+  text-align: center;
+  width: 5cm;
+}
+
+/* Right stripe: red for original, gray for copy */
+.invoice-stripe { 
+  position: absolute; 
+  top: 0; 
+  right: 0; 
+  width: 32px; 
+  height: 312px; 
+  z-index: 10; 
+}
+.invoice-stripe.original { 
+  background: var(--stripe-original);
+}
+.invoice-stripe.copy {
+  background: var(--stripe-copy); 
+}
+
+/* Header */
+.invoice-header { 
+  text-align: right; 
+  margin-bottom: 4px;
+}
+.invoice-title { 
+  position: absolute;
+  left: 14.5cm;
+  top: 3.2cm;
+  font-size: 14px; 
+  font-weight: 700;
+  margin-right: 30px;
+}
+.invoice-title-en {
+  position: absolute;
+  left: 14.5cm;
+  top: 4.3cm;
+  font-size: 14px; 
+  font-weight: 600; 
+}
+
+/* Company/Customer info */
+.invoice-info-section { 
+  position: relative;
+  font-size: 12px; 
+  line-height: 1.3; 
+  height: auto;
+}
+
+.invoice-info-row { 
+  position: relative;
+}
+
+/* Absolute positioning classes */
+.invoice-info-left {
+  position: absolute;
+  left: 2cm;
+  top: 5.2cm;
+}
+
+.invoice-info-right {
+  position: absolute;
+  left: 12cm;
+  top: 5.2cm;
+  text-align: left;
+}
+
+.invoice-info-right1 {
+  position: absolute;
+  text-align: left;
+}
+
+/* Precise positioning utilities - you can add more as needed */
+/* NOTE: Removed duplicate overrides (.pos-customer-name/.pos-invoice-no/.pos-invoice-date)
+   that appeared earlier in the file. Keep a SINGLE definition above for each.
+   If you need to adjust positions, edit the FIRST block near "Customer Info Section". */
+
+/* If you still need utility placeholders, you can re-enable these with different class names:
+   .pos-invoice-date-alt { left:17.3cm; top:5.2cm; }
+   .pos-invoice-no-alt { left:12cm; top:5.2cm; }
+   .pos-customer-name-alt { left:2cm; top:5.2cm; }
+*/
+
+/* Add more position classes here following this pattern:
+.pos-element-name {
+  position: absolute;
+  left: XXcm;  (horizontal position from left)
+  top: XXcm;   (vertical position from top)
+}
+*/
+
+.invoice-info-line {
+   font-size: 12px;
+  line-height: 1.3;
+  margin-top: 2px;margin-top: 2px;
+}
+
+/* Extra right block (วันที่ชำระเงิน/เอกสารอ้างอิง/พนักงานขาย) */
+.invoice-meta {
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+/* Table */
+.invoice-table { 
+  width:100%; 
+  border-collapse: collapse; 
+  font-size: 12px; 
+  margin-top: 4px; 
+  border: none;
+}
+
+/* Use fixed table layout so column widths below are respected in print */
+.pos-items-table { 
+  table-layout: fixed; 
+}
+
+/* Column widths for the invoice items table (sum ~= 19.8cm) */
+.pos-items-table .col-no { width: 1.5cm; }
+.pos-items-table .col-desc { width: 7cm; }
+.pos-items-table .col-qty { width: 3cm; }
+.pos-items-table .col-unit { width: 1.5cm; }
+.pos-items-table .col-price { width: 2.2cm; }
+.pos-items-table .col-amount { width: 3cm; }
+
+/* Cell padding and vertical alignment */
+.invoice-table th,
+.invoice-table td,
+.pos-items-table th,
+.pos-items-table td {
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.invoice-table th,
+.pos-items-table th {
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Alignment helpers for both invoice-table and pos-items-table */
+.invoice-table td.invoice-text-center,
+.pos-items-table td.invoice-text-center {
+  text-align: center;
+  line-height: 1.4;
+}
+.invoice-table td.invoice-text-right,
+.pos-items-table td.invoice-text-right {
+  text-align: right;
+  line-height: 1.4;
+}
+
+.invoice-table td.invoice-text-left,
+.pos-items-table td.invoice-text-left {
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* Description column left-aligned for data rows */
+.pos-items-table td.col-desc {
+  text-align: left;
+}
+
+/* Ensure long descriptions wrap within the fixed column width */
+.pos-items-table td,
+.pos-items-table th {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Per-column header alignment - all centered like in photo */
+.pos-items-table th.col-desc,
+.pos-items-table th.col-amount,
+.pos-items-table th.col-price,
+.pos-items-table th.col-qty,
+.pos-items-table th.col-unit,
+.pos-items-table th.col-no { 
+  text-align: center;
+  font-weight: 700;
+}
+
+.invoice-nowrap {
+  white-space: nowrap;
+}
+
+/* Column helpers */
+.invoice-table .col-no { width:50px; }
+.invoice-table .col-qty { width:80px; }
+.invoice-table .col-unit { width:80px; }
+.invoice-table .col-price { width:120px; }
+.invoice-table .col-amount { width:120px; }
+
+/* Footer Section */
+.invoice-footer {
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.footer-notes {
+  flex: 1;
+  max-width: 45%;
+}
+
+.notes-title {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.notes-list p {
+  font-size: 11.1px;
+  margin: 0.1cm 0;
+  line-height: 1.4;
+  padding-left: 0.8cm; /* space for numbering like '1. ' */
+  text-indent: -0.8cm; /* hanging indent so wrapped lines align under first letter */
+}
+
+.footer-signatures {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.signature-box {
+  text-align: center;
+  min-width: 180px;
+}
+
+.signature-title {
+  font-weight: 600;
+  margin-bottom: 25px;
+  font-size: 12px;
+}
+
+.signature-line {
+  margin-bottom: 8px;
+}
+
+.signature-name {
+  margin-bottom: 8px;
+}
+
+.signature-date {
+  font-size: 11px;
+}
+
+/* Totals / positioned footer elements */
+.pos-eoe {
+  position: absolute;
+  left: 5.5cm;
+  top: 20.3cm;
+  font-size: 14px;
+  width: 10cm;
+}
+
+.pos-totals {
+  position: absolute;
+  left: 13.85cm;
+  top: 20.3cm;
+  width: 8cm;
+  font-size: 12px;
+}
+
+.pos-total-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0.15cm;
+}
+
+.pos-total-label {
+  text-align: left;
+  white-space: nowrap;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.pos-total-value {
+  text-align: right;
+  font-size: 14px;
+  flex: 0 0 4cm;
+  line-height: 1.5;
+}
+
+/* ensure rows vertically align when label/value sizes differ */
+.pos-total-row { align-items: center; }
+
+/* Make label flexible so it uses remaining space but doesn't push the value */
+.pos-total-label {
+  flex: 1 1 auto;
+  min-width: 0; /* allow shrinking */
+}
+
+.pos-grand-text {
+  position: absolute;
+  left: 1cm;
+  top: 23.15cm;
+  font-size: 14px;
+  width: 12cm;
+}
+
+
+/* Separate label and value so they can be positioned independently */
+.pos-grand-label {
+  position: absolute;
+  left: 13.85cm;
+  top: 23.15cm;
+  font-size: 14px;
+}
+
+.pos-grand-value {
+  position: absolute;
+  left: 17.86cm;
+  top: 23.15cm;
+  font-size: 14px;
+  text-align: right;
+  min-width: 4cm;
+}
+
+/* Print rules */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .invoice-detail { 
+    background: #fff !important;
+    min-height: 0;
+    height: auto;
+  }
+  
+  .invoice-toolbar { display: none !important; }
+  
+  .invoice-document { 
+    box-shadow: none !important; 
+    margin: 0;
+    width: 23cm;
+    height: 28cm;
+  }
+  
+  .invoice-stripe { display: none !important; }
+  
+  /* Force portrait page size and explicit dimensions to reduce browser auto-rotation */
+  @page { 
+    size: 23cm 28cm portrait;
+    margin: 0mm;
+  }
+  
+  * { 
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

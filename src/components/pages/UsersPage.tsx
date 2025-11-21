@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import type { UserRole } from '../../types';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { useState, useEffect } from "react";
+import type { UserRole } from "../../types";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import {
   Table,
   TableBody,
@@ -9,18 +9,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { Badge } from '../ui/badge';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+} from "../ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Plus, Edit, Trash2, Eye, Search } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from "../ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,12 +30,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { toast } from 'sonner';
-import { userService } from '../../services/userService';
-import type { User as ApiUser } from '../../services/userService';
+} from "../ui/alert-dialog";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { toast } from "sonner";
+import { userService } from "../../services/userService";
+import type { User as ApiUser } from "../../services/userService";
 
 interface UsersPageProps {
   userRole: UserRole;
@@ -43,22 +49,22 @@ interface UsersPageProps {
 
 export default function UsersPage({ userRole }: UsersPageProps) {
   const [data, setData] = useState<ApiUser[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ApiUser | null>(null);
   const [formData, setFormData] = useState({
-    username: '',
-    fullname: '',
-    email: '',
-    role: 'user' as UserRole,
-    password: '',
+    username: "",
+    fullname: "",
+    email: "",
+    role: "user" as UserRole,
+    password: "",
   });
 
-  const canEdit = userRole === 'admin' || userRole === 'account';
-  const canDelete = userRole === 'admin' || userRole === 'account';
+  const canEdit = userRole === "admin" || userRole === "account";
+  const canDelete = userRole === "admin" || userRole === "account";
 
   // ✅ โหลดข้อมูลผู้ใช้งานจาก Laravel API
   const fetchUsers = async () => {
@@ -66,8 +72,8 @@ export default function UsersPage({ userRole }: UsersPageProps) {
       const users = await userService.getAll();
       setData(users);
     } catch (err) {
-      console.error('Error loading users:', err);
-      toast.error('โหลดข้อมูลผู้ใช้ล้มเหลว');
+      console.error("Error loading users:", err);
+      toast.error("โหลดข้อมูลผู้ใช้ล้มเหลว");
     }
   };
 
@@ -86,30 +92,30 @@ export default function UsersPage({ userRole }: UsersPageProps) {
         role: formData.role,
       });
 
-      toast.success('เพิ่มผู้ใช้งานสำเร็จ');
+      toast.success("เพิ่มผู้ใช้งานสำเร็จ");
       setIsAddDialogOpen(false);
 
       // ล้างค่าในฟอร์ม
       setFormData({
-        username: '',
-        fullname: '',
-        email: '',
-        role: 'user',
-        password: '',
+        username: "",
+        fullname: "",
+        email: "",
+        role: "user",
+        password: "",
       });
 
       // โหลดข้อมูลผู้ใช้ใหม่
       await fetchUsers();
     } catch (err) {
-      console.error('เพิ่มผู้ใช้งานไม่สำเร็จ:', err);
-      toast.error('ไม่สามารถเพิ่มผู้ใช้งานได้');
+      console.error("เพิ่มผู้ใช้งานไม่สำเร็จ:", err);
+      toast.error("ไม่สามารถเพิ่มผู้ใช้งานได้");
     }
   };
 
   // ✅ แก้ไขผู้ใช้งาน
   const handleEdit = (item: ApiUser) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์แก้ไขข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์แก้ไขข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -118,7 +124,7 @@ export default function UsersPage({ userRole }: UsersPageProps) {
       fullname: item.fullname,
       email: item.email,
       role: item.role,
-      password: '',
+      password: "",
     });
     setIsEditDialogOpen(true);
   };
@@ -136,13 +142,13 @@ export default function UsersPage({ userRole }: UsersPageProps) {
         password: formData.password || undefined,
       });
 
-      toast.success('แก้ไขผู้ใช้งานสำเร็จ');
+      toast.success("แก้ไขผู้ใช้งานสำเร็จ");
       setIsEditDialogOpen(false);
       setSelectedItem(null);
       await fetchUsers();
     } catch (err) {
-      console.error('แก้ไขผู้ใช้งานไม่สำเร็จ:', err);
-      toast.error('ไม่สามารถอัปเดตข้อมูลได้');
+      console.error("แก้ไขผู้ใช้งานไม่สำเร็จ:", err);
+      toast.error("ไม่สามารถอัปเดตข้อมูลได้");
     }
   };
 
@@ -155,7 +161,7 @@ export default function UsersPage({ userRole }: UsersPageProps) {
   // ✅ ลบผู้ใช้
   const handleDeleteClick = (item: ApiUser) => {
     if (!canDelete) {
-      toast.error('คุณไม่มีสิทธิ์ลบข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์ลบข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -172,26 +178,30 @@ export default function UsersPage({ userRole }: UsersPageProps) {
       setSelectedItem(null);
       await fetchUsers();
     } catch (err) {
-      console.error('ลบผู้ใช้งานไม่สำเร็จ:', err);
-      toast.error('ไม่สามารถลบข้อมูลได้');
+      console.error("ลบผู้ใช้งานไม่สำเร็จ:", err);
+      toast.error("ไม่สามารถลบข้อมูลได้");
     }
   };
 
   const getRoleBadge = (role: UserRole) => {
     const roleNames = {
-      admin: 'ผู้ดูแลระบบ',
-      account: 'เจ้าหน้าที่บัญชี',
-      user: 'ผู้ใช้งาน',
+      admin: "ผู้ดูแลระบบ",
+      account: "เจ้าหน้าที่บัญชี",
+      user: "ผู้ใช้งาน",
     };
     return <Badge>{roleNames[role]}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary'> = {
-      active: 'default',
-      inactive: 'secondary',
+    const variants: Record<string, "default" | "secondary"> = {
+      active: "default",
+      inactive: "secondary",
     };
-    return <Badge variant={variants[status]}>{status === 'active' ? 'ใช้งาน' : 'ระงับ'}</Badge>;
+    return (
+      <Badge variant={variants[status]}>
+        {status === "active" ? "ใช้งาน" : "ระงับ"}
+      </Badge>
+    );
   };
 
   const filteredData = data.filter(
@@ -256,7 +266,11 @@ export default function UsersPage({ userRole }: UsersPageProps) {
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleView(item)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(item)}
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
@@ -297,7 +311,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               <Input
                 placeholder="username"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -305,7 +321,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               <Input
                 placeholder="ชื่อ นามสกุล"
                 value={formData.fullname}
-                onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, fullname: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -314,7 +332,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
                 type="email"
                 placeholder="email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -323,14 +343,18 @@ export default function UsersPage({ userRole }: UsersPageProps) {
                 type="password"
                 placeholder="••••••••"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label>บทบาท</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+                onValueChange={(value: UserRole) =>
+                  setFormData({ ...formData, role: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -343,7 +367,10 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               </Select>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 ยกเลิก
               </Button>
               <Button onClick={handleAdd}>บันทึก</Button>
@@ -357,7 +384,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>แก้ไขผู้ใช้งาน</DialogTitle>
-            <DialogDescription>แก้ไขข้อมูล {selectedItem?.fullname}</DialogDescription>
+            <DialogDescription>
+              แก้ไขข้อมูล {selectedItem?.fullname}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -365,7 +394,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               <Input
                 placeholder="username"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -373,7 +404,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               <Input
                 placeholder="ชื่อ นามสกุล"
                 value={formData.fullname}
-                onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, fullname: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -382,7 +415,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
                 type="email"
                 placeholder="email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -391,14 +426,18 @@ export default function UsersPage({ userRole }: UsersPageProps) {
                 type="password"
                 placeholder="••••••••"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label>บทบาท</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+                onValueChange={(value: UserRole) =>
+                  setFormData({ ...formData, role: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -411,7 +450,10 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               </Select>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
                 ยกเลิก
               </Button>
               <Button onClick={handleUpdate}>บันทึกการเปลี่ยนแปลง</Button>
@@ -437,7 +479,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
                 </Avatar>
                 <div>
                   <p className="font-medium">{selectedItem.fullname}</p>
-                  <p className="text-sm text-gray-500">@{selectedItem.username}</p>
+                  <p className="text-sm text-gray-500">
+                    @{selectedItem.username}
+                  </p>
                 </div>
               </div>
               <div>
@@ -450,7 +494,9 @@ export default function UsersPage({ userRole }: UsersPageProps) {
               </div>
               <div>
                 <Label className="text-gray-500">สถานะ</Label>
-                <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                <div className="mt-1">
+                  {getStatusBadge(selectedItem.status)}
+                </div>
               </div>
               <div className="flex justify-end">
                 <Button onClick={() => setIsViewDialogOpen(false)}>ปิด</Button>
@@ -461,17 +507,23 @@ export default function UsersPage({ userRole }: UsersPageProps) {
       </Dialog>
 
       {/* Dialog: Confirm Delete */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้งาน “{selectedItem?.fullname}”? การดำเนินการนี้ไม่สามารถยกเลิกได้
+              คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้งาน “{selectedItem?.fullname}”?
+              การดำเนินการนี้ไม่สามารถยกเลิกได้
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>ลบ</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              ลบ
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

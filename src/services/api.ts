@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // Base API URL - ปรับตาม environment ของคุณ
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+// Prefer Vite env variable; fallback to relative '/api' so Vite dev proxy can forward requests.
+// To override in production, set VITE_API_BASE_URL.
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || '/api';
 
 // Create axios instance with default config
 export const apiClient = axios.create({
@@ -11,6 +13,10 @@ export const apiClient = axios.create({
     'Accept': 'application/json',
   },
 });
+// Log the base URL used so developers can quickly diagnose proxy issues
+if (import.meta.env.DEV) {
+  console.debug('API base URL:', API_BASE_URL);
+}
 
 // Add request interceptor for authentication token (if needed)
 apiClient.interceptors.request.use(
@@ -26,6 +32,9 @@ apiClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Export the base url in case other pages still need to construct custom endpoints
+export { API_BASE_URL };
 
 // Add response interceptor for error handling
 apiClient.interceptors.response.use(

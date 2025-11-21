@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import type { UserRole } from '../../types';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import ReceiveVoucherForm from '../ReceiveVoucherForm';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import type { UserRole } from "../../types";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import ReceiveVoucherForm from "../ReceiveVoucherForm";
 import {
   Table,
   TableBody,
@@ -11,23 +11,36 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Plus, Edit, Trash2, Eye, Search, Hourglass, Calendar, CheckCircle2, XCircle, Printer, ChevronDown, Clock } from 'lucide-react';
-import { Badge } from '../ui/badge';
+} from "../ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Search,
+  Hourglass,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Printer,
+  ChevronDown,
+  Clock,
+} from "lucide-react";
+import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+} from "../ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from "../ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,9 +50,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { Label } from '../ui/label';
-import { toast } from 'sonner';
+} from "../ui/alert-dialog";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
 
 interface ReceiveVoucherPageProps {
   userRole: UserRole;
@@ -52,28 +65,30 @@ interface ReceiveVoucher {
   payer: string;
   description?: string;
   amount: number;
-  status: 'รอรับ' | 'รออนุมัติ' | 'รับแล้ว' | 'ยกเลิก';
+  status: "รอรับ" | "รออนุมัติ" | "รับแล้ว" | "ยกเลิก";
   receive_method?: string;
   withholding_tax_no?: string;
   withholding_tax_amount?: number;
   receive_date?: string;
 }
 
-const API_URL = 'http://127.0.0.1:8000/api/receive-vouchers';
+const API_URL = "http://127.0.0.1:8000/api/receive-vouchers";
 
-export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps) {
+export default function ReceiveVoucherPage({
+  userRole,
+}: ReceiveVoucherPageProps) {
   const [data, setData] = useState<ReceiveVoucher[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ReceiveVoucher | null>(null);
 
-  const canEdit = userRole === 'admin' || userRole === 'account';
-  const canDelete = userRole === 'admin' || userRole === 'account';
+  const canEdit = userRole === "admin" || userRole === "account";
+  const canDelete = userRole === "admin" || userRole === "account";
 
   // Fetch data from API
   useEffect(() => {
@@ -86,8 +101,8 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
       const response = await axios.get(API_URL);
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('เกิดข้อผิดพลาดในการดึงข้อมูล');
+      console.error("Error fetching data:", error);
+      toast.error("เกิดข้อผิดพลาดในการดึงข้อมูล");
     } finally {
       setLoading(false);
     }
@@ -95,15 +110,15 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
 
   // Calculate status counts
   const statusCounts = {
-    รอรับ: data.filter((item) => item.status === 'รอรับ').length,
-    รออนุมัติ: data.filter((item) => item.status === 'รออนุมัติ').length,
-    รับแล้ว: data.filter((item) => item.status === 'รับแล้ว').length,
-    ยกเลิก: data.filter((item) => item.status === 'ยกเลิก').length,
+    รอรับ: data.filter((item) => item.status === "รอรับ").length,
+    รออนุมัติ: data.filter((item) => item.status === "รออนุมัติ").length,
+    รับแล้ว: data.filter((item) => item.status === "รับแล้ว").length,
+    ยกเลิก: data.filter((item) => item.status === "ยกเลิก").length,
   };
 
   const handleEdit = (item: ReceiveVoucher) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์แก้ไขข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์แก้ไขข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -117,7 +132,7 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
 
   const handleDeleteClick = (item: ReceiveVoucher) => {
     if (!canDelete) {
-      toast.error('คุณไม่มีสิทธิ์ลบข้อมูล');
+      toast.error("คุณไม่มีสิทธิ์ลบข้อมูล");
       return;
     }
     setSelectedItem(item);
@@ -134,8 +149,8 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
       setSelectedItem(null);
       fetchData();
     } catch (error) {
-      console.error('Error deleting voucher:', error);
-      toast.error('เกิดข้อผิดพลาดในการลบใบสำคัญรับเงิน');
+      console.error("Error deleting voucher:", error);
+      toast.error("เกิดข้อผิดพลาดในการลบใบสำคัญรับเงิน");
     }
   };
 
@@ -144,9 +159,12 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
     window.print();
   };
 
-  const handleStatusChange = async (item: ReceiveVoucher, newStatus: 'รอรับ' | 'รออนุมัติ' | 'รับแล้ว' | 'ยกเลิก') => {
+  const handleStatusChange = async (
+    item: ReceiveVoucher,
+    newStatus: "รอรับ" | "รออนุมัติ" | "รับแล้ว" | "ยกเลิก"
+  ) => {
     if (!canEdit) {
-      toast.error('คุณไม่มีสิทธิ์เปลี่ยนสถานะ');
+      toast.error("คุณไม่มีสิทธิ์เปลี่ยนสถานะ");
       return;
     }
 
@@ -168,18 +186,20 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
       toast.success(`เปลี่ยนสถานะเป็น "${newStatus}" สำเร็จ`);
       fetchData();
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ');
+      console.error("Error updating status:", error);
+      toast.error("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
     }
   };
 
-
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      'รอรับ': 'outline',
-      'รออนุมัติ': 'secondary',
-      'รับแล้ว': 'default',
-      'ยกเลิก': 'destructive',
+    const variants: Record<
+      string,
+      "default" | "secondary" | "destructive" | "outline"
+    > = {
+      รอรับ: "outline",
+      รออนุมัติ: "secondary",
+      รับแล้ว: "default",
+      ยกเลิก: "destructive",
     };
     return <Badge variant={variants[status]}>{status}</Badge>;
   };
@@ -188,7 +208,8 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
     const matchesSearch =
       item.voucher_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.payer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
+    const matchesStatus =
+      filterStatus === "all" || item.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -198,7 +219,7 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card
           className="bg-gradient-to-br from-violet-400 to-violet-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('รอรับ')}
+          onClick={() => setFilterStatus("รอรับ")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -215,7 +236,7 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
 
         <Card
           className="bg-gradient-to-br from-indigo-400 to-indigo-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('รออนุมัติ')}
+          onClick={() => setFilterStatus("รออนุมัติ")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -232,7 +253,7 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
 
         <Card
           className="bg-gradient-to-br from-teal-400 to-teal-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('รับแล้ว')}
+          onClick={() => setFilterStatus("รับแล้ว")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -249,7 +270,7 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
 
         <Card
           className="bg-gradient-to-br from-rose-400 to-rose-500 text-white cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => setFilterStatus('ยกเลิก')}
+          onClick={() => setFilterStatus("ยกเลิก")}
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -271,13 +292,13 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>รายการใบสำคัญรับเงิน</CardTitle>
-              {filterStatus !== 'all' && (
+              {filterStatus !== "all" && (
                 <p className="text-sm text-gray-500 mt-1">
-                  กรองตาม: {filterStatus}{' '}
+                  กรองตาม: {filterStatus}{" "}
                   <Button
                     variant="link"
                     className="p-0 h-auto text-sm"
-                    onClick={() => setFilterStatus('all')}
+                    onClick={() => setFilterStatus("all")}
                   >
                     แสดงทั้งหมด
                   </Button>
@@ -295,7 +316,7 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="ค้นหาเลขที่เอกสาร, ผู้จ่ายเงิน..."
+                placeholder="     ค้นหาเลขที่เอกสาร, ผู้จ่ายเงิน..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -328,7 +349,10 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
                 </TableRow>
               ) : filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-8 text-gray-500"
+                  >
                     ไม่พบข้อมูล
                   </TableCell>
                 </TableRow>
@@ -336,7 +360,9 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
                 filteredData.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.voucher_no}</TableCell>
-                    <TableCell>{new Date(item.date).toLocaleDateString('th-TH')}</TableCell>
+                    <TableCell>
+                      {new Date(item.date).toLocaleDateString("th-TH")}
+                    </TableCell>
                     <TableCell>{item.payer}</TableCell>
                     <TableCell>{item.description}</TableCell>
                     <TableCell className="text-right">
@@ -357,19 +383,29 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'รอรับ')}>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(item, "รอรับ")}
+                          >
                             <Hourglass className="w-4 h-4 mr-2" />
                             รอรับ
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'รออนุมัติ')}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleStatusChange(item, "รออนุมัติ")
+                            }
+                          >
                             <Clock className="w-4 h-4 mr-2" />
                             รออนุมัติ
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'รับแล้ว')}>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(item, "รับแล้ว")}
+                          >
                             <CheckCircle2 className="w-4 h-4 mr-2" />
                             รับแล้ว
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(item, 'ยกเลิก')}>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(item, "ยกเลิก")}
+                          >
                             <XCircle className="w-4 h-4 mr-2" />
                             ยกเลิก
                           </DropdownMenuItem>
@@ -378,7 +414,12 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleView(item)} title="ดูรายละเอียด">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleView(item)}
+                          title="ดูรายละเอียด"
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
                         <Button
@@ -450,7 +491,9 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>รายละเอียดใบสำคัญรับเงิน</DialogTitle>
-            <DialogDescription>เลขที่ {selectedItem?.voucher_no}</DialogDescription>
+            <DialogDescription>
+              เลขที่ {selectedItem?.voucher_no}
+            </DialogDescription>
           </DialogHeader>
           {selectedItem && (
             <div className="space-y-4">
@@ -461,7 +504,9 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
                 </div>
                 <div>
                   <Label className="text-gray-500">วันที่</Label>
-                  <p className="mt-1">{new Date(selectedItem.date).toLocaleDateString('th-TH')}</p>
+                  <p className="mt-1">
+                    {new Date(selectedItem.date).toLocaleDateString("th-TH")}
+                  </p>
                 </div>
               </div>
               <div>
@@ -471,25 +516,34 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-gray-500">จำนวนเงิน</Label>
-                  <p className="mt-1">฿{selectedItem.amount.toLocaleString()}</p>
+                  <p className="mt-1">
+                    ฿{selectedItem.amount.toLocaleString()}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-gray-500">วิธีรับเงิน</Label>
                   <p className="mt-1">{selectedItem.receive_method}</p>
                 </div>
               </div>
-              {(selectedItem.withholding_tax_no || selectedItem.withholding_tax_amount) && (
+              {(selectedItem.withholding_tax_no ||
+                selectedItem.withholding_tax_amount) && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-gray-500">เลขที่ใบหัก ณ ที่จ่าย</Label>
-                    <p className="mt-1">{selectedItem.withholding_tax_no || '-'}</p>
+                    <Label className="text-gray-500">
+                      เลขที่ใบหัก ณ ที่จ่าย
+                    </Label>
+                    <p className="mt-1">
+                      {selectedItem.withholding_tax_no || "-"}
+                    </p>
                   </div>
                   <div>
-                    <Label className="text-gray-500">ยอดเงินหัก ณ ที่จ่าย</Label>
+                    <Label className="text-gray-500">
+                      ยอดเงินหัก ณ ที่จ่าย
+                    </Label>
                     <p className="mt-1">
                       {selectedItem.withholding_tax_amount
                         ? `฿${selectedItem.withholding_tax_amount.toLocaleString()}`
-                        : '-'}
+                        : "-"}
                     </p>
                   </div>
                 </div>
@@ -498,13 +552,17 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
                 <div>
                   <Label className="text-gray-500">วันที่รับชำระเงิน</Label>
                   <p className="mt-1">
-                    {new Date(selectedItem.receive_date).toLocaleDateString('th-TH')}
+                    {new Date(selectedItem.receive_date).toLocaleDateString(
+                      "th-TH"
+                    )}
                   </p>
                 </div>
               )}
               <div>
                 <Label className="text-gray-500">สถานะ</Label>
-                <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                <div className="mt-1">
+                  {getStatusBadge(selectedItem.status)}
+                </div>
               </div>
               <div>
                 <Label className="text-gray-500">รายละเอียด</Label>
@@ -527,18 +585,23 @@ export default function ReceiveVoucherPage({ userRole }: ReceiveVoucherPageProps
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>ยืนยันการลบ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบใบสำคัญรับเงิน {selectedItem?.voucher_no}?
-              การดำเนินการนี้ไม่สามารถยกเลิกได้
+              คุณแน่ใจหรือไม่ว่าต้องการลบใบสำคัญรับเงิน{" "}
+              {selectedItem?.voucher_no}? การดำเนินการนี้ไม่สามารถยกเลิกได้
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>ลบ</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmDelete}>
+              ลบ
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

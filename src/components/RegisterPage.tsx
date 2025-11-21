@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,7 +22,6 @@ export default function RegisterPage({ onBackToLogin }: RegisterPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
- 
 
   // ✅ ฟังก์ชันส่งข้อมูลสมัครสมาชิกไป Backend Laravel
   const handleRegister = async (e: React.FormEvent) => {
@@ -28,7 +33,7 @@ export default function RegisterPage({ onBackToLogin }: RegisterPageProps) {
     }
 
     try {
-      const axios = (await import('axios')).default;
+      const axios = (await import("axios")).default;
       const response = await axios.post("http://127.0.0.1:8000/api/register", {
         username,
         fullname,
@@ -46,7 +51,9 @@ export default function RegisterPage({ onBackToLogin }: RegisterPageProps) {
     } catch (error: any) {
       console.error("Error:", error);
       if (error.response) {
-        toast.error(error.response.data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
+        toast.error(
+          error.response.data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก"
+        );
       } else if (error.request) {
         toast.error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
       } else {
@@ -63,7 +70,9 @@ export default function RegisterPage({ onBackToLogin }: RegisterPageProps) {
             <Building2 className="w-10 h-10 text-white" />
           </div>
           <CardTitle>สมัครสมาชิก</CardTitle>
-          <CardDescription>กรอกข้อมูลให้ครบถ้วนเพื่อสร้างบัญชีใหม่</CardDescription>
+          <CardDescription>
+            กรอกข้อมูลให้ครบถ้วนเพื่อสร้างบัญชีใหม่
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -127,9 +136,6 @@ export default function RegisterPage({ onBackToLogin }: RegisterPageProps) {
                 required
               />
             </div>
-
-          
-           
 
             <Button type="submit" className="w-full mt-4">
               สมัครสมาชิก

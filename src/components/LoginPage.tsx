@@ -1,58 +1,62 @@
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Building2 } from 'lucide-react';
-import { toast } from 'sonner';
-import type { User } from '../types';
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Building2 } from "lucide-react";
+import { toast } from "sonner";
+import type { User } from "../types";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
   onShowRegister: () => void; // ✅ เพิ่มบรรทัดนี้
 }
 
-
-
-
 export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username,
-        password,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok && data.status === "success") {
-      toast.success(`เข้าสู่ระบบสำเร็จ ยินดีต้อนรับคุณ ${data.user.fullname}`);
-      onLogin({
-        id: data.user.id,
-        username: data.user.username,
-        name: data.user.fullname,
-        role: data.user.role,
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
       });
-    } else {
-      toast.error(data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+
+      const data = await response.json();
+
+      if (response.ok && data.status === "success") {
+        toast.success(
+          `เข้าสู่ระบบสำเร็จ ยินดีต้อนรับคุณ ${data.user.fullname}`
+        );
+        onLogin({
+          id: data.user.id,
+          username: data.user.username,
+          name: data.user.fullname,
+          role: data.user.role,
+        });
+      } else {
+        toast.error(data.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
     }
-  } catch (error) {
-    console.error("Error:", error);
-    toast.error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
-  }
-};
-  
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -89,11 +93,13 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">เข้าสู่ระบบ</Button>
+            <Button type="submit" className="w-full">
+              เข้าสู่ระบบ
+            </Button>
           </form>
 
           <p className="text-sm text-center text-gray-500 mt-4">
-            ยังไม่มีบัญชี?{' '}
+            ยังไม่มีบัญชี?{" "}
             <a
               href="#"
               onClick={(e) => {
@@ -105,8 +111,6 @@ export default function LoginPage({ onLogin, onShowRegister }: LoginPageProps) {
               สมัครสมาชิก
             </a>
           </p>
-
-          
         </CardContent>
       </Card>
     </div>

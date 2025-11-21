@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Card, CardContent } from './ui/card';
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Card, CardContent } from "./ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from "./ui/select";
 import {
   Table,
   TableBody,
@@ -18,18 +18,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table';
-import { Plus, Trash2, Printer } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { customerService } from '../services/customerService';
-import type { Customer } from '../services/customerService';
-import { productService } from '../services/productService';
-import type { Product } from '../services/productService';
-import { toast } from 'sonner';
-
-
-
+} from "./ui/table";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { customerService } from "../services/customerService";
+import type { Customer } from "../services/customerService";
+import { productService } from "../services/productService";
+import type { Product } from "../services/productService";
+import { toast } from "sonner";
 
 interface InvoiceItem {
   id: string;
@@ -39,34 +43,31 @@ interface InvoiceItem {
 }
 
 interface TaxInvoiceFormProps {
-  documentType: 'invoice' | 'receipt' | 'quotation' | 'purchase_order';
-  onSave: (data: any) => void;
+  documentType: "invoice" | "receipt" | "quotation" | "purchase_order";
+  onSave: (data: Record<string, unknown>) => void;
   onCancel: () => void;
-  editData?: any;
- 
+  editData?: Record<string, unknown>;
 }
-
-
 
 // เอกสารต้นฉบับที่สามารถเลือกได้
 const sourceDocuments = [
   {
-    id: '1',
-    code: 'QT250001',
-    name: 'ใบเสนอราคา - บริษัท ABC จำกัด',
-    customer: 'บริษัท ABC จำกัด',
+    id: "1",
+    code: "QT250001",
+    name: "ใบเสนอราคา - บริษัท ABC จำกัด",
+    customer: "บริษัท ABC จำกัด",
   },
   {
-    id: '2',
-    code: 'PO250002',
-    name: 'ใบสั่งซื้อ - บริษัท XYZ จำกัด',
-    customer: 'บริษัท XYZ จำกัด',
+    id: "2",
+    code: "PO250002",
+    name: "ใบสั่งซื้อ - บริษัท XYZ จำกัด",
+    customer: "บริษัท XYZ จำกัด",
   },
   {
-    id: '3',
-    code: 'INV250010',
-    name: 'ใบแจ้งหนี้ - ร้าน DEF การค้า',
-    customer: 'ร้าน DEF การค้า',
+    id: "3",
+    code: "INV250010",
+    name: "ใบแจ้งหนี้ - ร้าน DEF การค้า",
+    customer: "ร้าน DEF การค้า",
   },
 ];
 
@@ -76,56 +77,189 @@ export default function TaxInvoiceForm({
   onCancel,
   editData,
 }: TaxInvoiceFormProps) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
+
+  // สร้างเลขเอกสาร (format helper)
+  type DocNumberFormat = "plain" | "braces" | "dash";
+
+  // Generate a document number using prefix + year + 4-digit sequence
+  // format: 'plain' => INV20250001
+  //         'braces' => INV{2025}{0001}
+  //         'dash' => INV-2025-0001
+  const generateDocNumber = (
+    prefix: string,
+    lastDocNumber = 0,
+    format: DocNumberFormat = "plain"
+  ) => {
+    const currentYear = new Date().getFullYear().toString(); // ปีปัจจุบัน เช่น 2025
+    const seq = (lastDocNumber + 1).toString().padStart(4, "0");
+
+    if (format === "braces") return `${prefix}{${currentYear}}{${seq}}`;
+    if (format === "dash") return `${prefix}-${currentYear}-${seq}`;
+    return `${prefix}${currentYear}${seq}`;
+  };
 
   const [docNumber, setDocNumber] = useState(() => {
     if (editData) {
-      return editData.invoice_no || editData.quotation_number || editData.po_number || editData.receipt_no || '';
+      return (
+        (editData.invoice_no as string) ||
+        (editData.quotation_number as string) ||
+        (editData.po_number as string) ||
+        (editData.receipt_no as string) ||
+        ""
+      );
     }
-    let prefix = 'TINV';
-    if (documentType === 'invoice') prefix = 'TINV';
-    else if (documentType === 'quotation') prefix = 'QT';
-    else if (documentType === 'purchase_order') prefix = 'PO';
-    else prefix = 'REC';
-    return `${prefix}${Date.now().toString().slice(-6)}`;
+    let prefix = "INV";
+    if (documentType === "invoice") prefix = "INV";
+    else if (documentType === "quotation") prefix = "QT";
+    else if (documentType === "purchase_order") prefix = "PO";
+    else if (documentType === "receipt") prefix = "REC";
+    else prefix = "PV";
+    return generateDocNumber(prefix);
   });
   const [docDate, setDocDate] = useState(today);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+  const [selectedDocument, setSelectedDocument] = useState("");
   const [openCustomer, setOpenCustomer] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [notes, setNotes] = useState('1. การชำระเงินภายในเวลาที่กำหนด 7 วัน ตั้งแต่วันที่ได้รับสินค้า\n2. การส่งมอบสินค้าต้องเป็นไปตามเงื่อนไขที่ระบุไว้ในใบสั่งซื้อนี้เท่านั้น คลาง POSTER ONLY การขนส่ง\n3. ค่าบริการจัดส่งคิดตามระยะทางจริงรวมภาษีมูลค่าเพิ่ม');
+  const [notes, setNotes] = useState(
+    "1. การชำระเงินภายในเวลาที่กำหนด 7 วัน ตั้งแต่วันที่ได้รับสินค้า\n2. การส่งมอบสินค้าต้องเป็นไปตามเงื่อนไขที่ระบุไว้ในใบสั่งซื้อนี้เท่านั้น คลาง POSTER ONLY การขนส่ง\n3. ค่าบริการจัดส่งคิดตามระยะทางจริงรวมภาษีมูลค่าเพิ่ม"
+  );
   const [discount, setDiscount] = useState(0);
   const [vatRate, setVatRate] = useState(7);
 
+  // ประเภทเอกสาร: ต้นฉบับ หรือ สำเนา
+  const [docCopyType, setDocCopyType] = useState<"original" | "copy">(
+    "original"
+  );
+
   // ข้อมูลการจัดส่ง
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [shippingPhone, setShippingPhone] = useState('');
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingPhone, setShippingPhone] = useState("");
 
   // พนักงานขาย
-  const [salesperson, setSalesperson] = useState('');
+  const [salesperson, setSalesperson] = useState("");
+  const [customerBranchName, setCustomerBranchName] = useState("");
 
   // วันที่ชำระเงิน
   const [paymentDate, setPaymentDate] = useState(today);
 
   // การคิดภาษี
-  const [taxType, setTaxType] = useState<'excluding' | 'including' | 'none'>('excluding');
+  const [taxType, setTaxType] = useState<"excluding" | "including" | "none">(
+    "excluding"
+  );
 
-  // โหลดข้อมูลลูกค้าและสินค้าจากฐานข้อมูล
+  // โหลดข้อมูลลูกค้า สินค้า และเลขเอกสารถัดไปจากฐานข้อมูล
+  useEffect(() => {
+    // ถ้ามีการแก้ไข ไม่ต้องดึงเลขใหม่
+    if (editData) return;
+
+    let mounted = true;
+    const fetchNextDocNumber = async () => {
+      try {
+        // กำหนด API URL และ prefix ตาม documentType
+        let apiUrl = "";
+        let prefix = "";
+
+        if (documentType === "invoice") {
+          apiUrl = "http://127.0.0.1:8000/api/invoices";
+          prefix = "INV";
+        } else if (documentType === "quotation") {
+          apiUrl = "http://127.0.0.1:8000/api/quotations";
+          prefix = "QT";
+        } else if (documentType === "purchase_order") {
+          apiUrl = "http://127.0.0.1:8000/api/purchase-orders";
+          prefix = "PO";
+        } else if (documentType === "receipt") {
+          apiUrl = "http://127.0.0.1:8000/api/receipts";
+          prefix = "REC";
+        }
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error("Failed to fetch");
+
+        const allDocuments = await response.json();
+        const year = new Date().getFullYear().toString();
+
+        // รูปแบบเลขเอกสาร: PREFIX{year}{4-digit}
+        const regex = new RegExp(`^${prefix}${year}(\\d{4})$`);
+        let maxSeq = 0;
+
+        const dataArray = Array.isArray(allDocuments)
+          ? allDocuments
+          : allDocuments.data || [];
+
+        dataArray.forEach((doc: Record<string, unknown>) => {
+          // ตรวจสอบตามฟิลด์ เลขที่เอกสารต่างๆ
+          const docNum =
+            doc.invoice_no ||
+            doc.quotation_number ||
+            doc.po_number ||
+            doc.receipt_no;
+          if (typeof docNum === "string") {
+            const m = docNum.match(regex);
+            if (m) {
+              const num = parseInt(m[1], 10);
+              if (!isNaN(num) && num > maxSeq) maxSeq = num;
+            }
+          }
+        });
+
+        if (mounted) {
+          const nextNumber = generateDocNumber(prefix, maxSeq); // default 'plain' format
+          setDocNumber(nextNumber);
+        }
+      } catch (error) {
+        console.error("Error fetching document number:", error);
+        if (mounted) {
+          let prefix = "TINV";
+          if (documentType === "quotation") prefix = "QT";
+          else if (documentType === "purchase_order") prefix = "PO";
+          else if (documentType === "receipt") prefix = "REC";
+          setDocNumber(generateDocNumber(prefix, 0));
+        }
+      }
+    };
+
+    fetchNextDocNumber();
+    return () => {
+      mounted = false;
+    };
+  }, [documentType, editData]);
+
+  // อัปเดตเลขเอกสารตามประเภท (ต้นฉบับ/สำเนา)
+  // หากกำลังแก้ไขข้อมูล (editData) ให้เก็บเลขเดิมไว้ ไม่เปลี่ยนอัตโนมัติ
+  useEffect(() => {
+    if (editData) return;
+    if (docCopyType === "copy") {
+      // สำเนา: เพิ่ม -1 ต่อท้าย
+      setDocNumber((prev) => {
+        if (prev.endsWith("-1")) return prev; // ถ้ามี -1 แล้ว ไม่ต้องเพิ่ม
+        return `${prev}-1`;
+      });
+    } else {
+      // ต้นฉบับ: ลบ -1 ถ้ามี
+      setDocNumber((prev) => prev.replace(/-1$/, ""));
+    }
+  }, [docCopyType]);
+
+  // โหลดข้อมูลลูกค้าและสินค้า
   useEffect(() => {
     const loadData = async () => {
       try {
         const [customerList, productList] = await Promise.all([
           customerService.getActiveCustomers(),
-          productService.getAll()
+          productService.getAll(),
         ]);
         setCustomers(customerList);
         setProducts(productList);
       } catch (error) {
-        console.error('Error loading data:', error);
-        toast.error('ไม่สามารถโหลดข้อมูลได้');
+        console.error("Error loading data:", error);
+        toast.error("ไม่สามารถโหลดข้อมูลได้");
       }
     };
     loadData();
@@ -134,47 +268,174 @@ export default function TaxInvoiceForm({
   // โหลดข้อมูลจาก editData เมื่อมีการแก้ไข
   useEffect(() => {
     if (editData && customers.length > 0) {
-      // หาลูกค้าจาก customer_code หรือ supplier_code
-      const customerCode = editData.customer_code || editData.supplier_code;
-      const customer = customers.find(c => c.code === customerCode);
+      // หาลูกค้าจาก customer_code, supplier_code หรือชื่อ (เพื่อรองรับ receipt)
+      const customerCode =
+        (editData.customer_code as string) ||
+        (editData.supplier_code as string);
+      const customerName =
+        (editData.customer_name as string) || (editData.customer as string);
+      const customer = customers.find(
+        (c) =>
+          c.code === customerCode || (customerName && c.name === customerName)
+      );
       if (customer) {
         setSelectedCustomer(customer);
+        setCustomerBranchName(customer.branch_name || "");
+      } else if (customerName) {
+        // สร้าง fallback customer object แบบปลอม (cast เพื่อผ่าน type)
+        const fakeCustomer = {
+          id: -1,
+          code: "",
+          name: String(customerName),
+          type: "" as any,
+          branch_name: "",
+          tax_id: (editData as any).customer_tax_id || "",
+          contact_person: "",
+          phone: (editData as any).customer_phone || "",
+          email: (editData as any).customer_email || "",
+          address: (editData as any).customer_address || "",
+          note: "",
+          account_name: "",
+          bank_account: "",
+          bank_name: "",
+          status: "active" as any,
+          created_at: "",
+          updated_at: "",
+        } as unknown as Customer;
+        setSelectedCustomer(fakeCustomer as any);
+        setCustomerBranchName(fakeCustomer.branch_name || "");
       }
 
       // โหลดข้อมูลอื่นๆ
-      if (editData.shipping_address) setShippingAddress(editData.shipping_address);
-      if (editData.shipping_phone) setShippingPhone(editData.shipping_phone);
-      if (editData.notes) setNotes(editData.notes);
-      if (editData.discount !== undefined) setDiscount(editData.discount);
-      if (editData.vat_rate !== undefined) setVatRate(editData.vat_rate);
-      if (editData.reference_doc) setSelectedDocument(editData.reference_doc);
-      if (editData.seller_name) setSalesperson(editData.seller_name); // โหลดชื่อผู้ขาย
+      if (editData.shipping_address)
+        setShippingAddress(editData.shipping_address as string);
+      if (editData.shipping_phone)
+        setShippingPhone(editData.shipping_phone as string);
+      if (editData.notes) setNotes(editData.notes as string);
+      if (editData.discount !== undefined)
+        setDiscount(editData.discount as number);
+      if (editData.vat_rate !== undefined)
+        setVatRate(editData.vat_rate as number);
+      const refDoc =
+        (editData.reference_doc as string) ||
+        (editData.invoice_ref as string) ||
+        (editData.reference_doc as string);
+      if (refDoc) setSelectedDocument(refDoc);
+      if ((editData as any).seller_name)
+        setSalesperson((editData as any).seller_name as string); // โหลดชื่อผู้ขาย
+      if ((editData as any).salesperson)
+        setSalesperson((editData as any).salesperson as string); // รองรับอีกชื่อฟิลด์
+      if (editData.doc_type)
+        setDocCopyType(editData.doc_type as "original" | "copy"); // โหลดประเภทเอกสาร
 
       // โหลด items
       if (editData.items) {
         try {
-          const parsedItems = typeof editData.items === 'string'
-            ? JSON.parse(editData.items)
-            : editData.items;
+          const parsedItems =
+            typeof editData.items === "string"
+              ? JSON.parse(editData.items)
+              : editData.items;
           setItems(parsedItems);
         } catch (error) {
-          console.error('Error parsing items:', error);
+          console.error("Error parsing items:", error);
         }
+      }
+      // สำหรับใบเสร็จ: เรียกใช้ editData.amount เพื่อเติมรายการให้แสดงยอด
+      if (
+        documentType === "receipt" &&
+        (editData as any).amount !== undefined
+      ) {
+        setItems([
+          {
+            id: Date.now().toString(),
+            description:
+              (editData as any).description ||
+              (editData as any).invoice_ref ||
+              "",
+            amount: Number((editData as any).amount) || 0,
+          },
+        ]);
+      }
+    }
+  }, [editData, customers]);
+
+  // โหลด fields ที่ไม่ขึ้นกับลูกค้า เช่น วันที่ เอกสาร และวันที่ชำระเงิน
+  useEffect(() => {
+    if (!editData) return;
+
+    // เลขที่เอกสาร: ถ้ามี ให้ใช้ค่าเดิม (guarded earlier too)
+    const existingDocNumber =
+      (editData as any).invoice_no ||
+      (editData as any).quotation_number ||
+      (editData as any).po_number ||
+      (editData as any).receipt_no;
+    if (existingDocNumber) setDocNumber(String(existingDocNumber));
+
+    // วันที่เอกสาร
+    const existingDate =
+      (editData as any).invoice_date ||
+      (editData as any).date ||
+      (editData as any).receipt_date;
+    if (existingDate) setDocDate(String(existingDate).split("T")[0]);
+
+    // วันที่ชำระเงิน / due date
+    const existingPayment =
+      (editData as any).payment_date || (editData as any).due_date;
+    if (existingPayment) setPaymentDate(String(existingPayment).split("T")[0]);
+
+    // VAT / และการคิดภาษี ถ้ามี
+    if ((editData as any).vat_rate !== undefined)
+      setVatRate(Number((editData as any).vat_rate));
+
+    // หากลูกค้าไม่พบในรายการ (เช่น ข้อมูลใบเสร็จเก่า) ให้ตั้งค่า fallback customer โดยไม่ทำให้ type ผิด
+    if (!customers?.length) return;
+    // หากมีค่า customer (เป็นชื่อ) ให้ค้นหา customer ที่มีชื่อนั้น
+    const customerName =
+      (editData as any).customer || (editData as any).customer_name;
+    if (customerName && customers.length > 0) {
+      const found = customers.find(
+        (c) =>
+          c.name === customerName || c.code === (editData as any).customer_code
+      );
+      if (found) {
+        setSelectedCustomer(found);
+      } else if (customerName) {
+        // สร้าง fallback customer object แบบปลอม (cast เพื่อผ่าน type)
+        const fakeCustomer = {
+          id: -1,
+          code: "",
+          name: String(customerName),
+          type: "" as any,
+          branch_name: "",
+          tax_id: (editData as any).customer_tax_id || "",
+          contact_person: "",
+          phone: (editData as any).customer_phone || "",
+          email: (editData as any).customer_email || "",
+          address: (editData as any).customer_address || "",
+          note: "",
+          account_name: "",
+          bank_account: "",
+          bank_name: "",
+          status: "active" as any,
+          created_at: "",
+          updated_at: "",
+        } as unknown as Customer;
+        setSelectedCustomer(fakeCustomer as any);
       }
     }
   }, [editData, customers]);
 
   const getDocumentTitle = () => {
-    if (documentType === 'invoice') return 'ใบแจ้งหนี้/ใบกำกับภาษี';
-    if (documentType === 'quotation') return 'ใบเสนอราคา';
-    if (documentType === 'purchase_order') return 'ใบสั่งซื้อ';
-    return 'ใบเสร็จรับเงิน/ใบกำกับภาษี';
+    if (documentType === "invoice") return "ใบแจ้งหนี้/ใบกำกับภาษี";
+    if (documentType === "quotation") return "ใบเสนอราคา";
+    if (documentType === "purchase_order") return "ใบสั่งซื้อ";
+    return "ใบเสร็จรับเงิน/ใบกำกับภาษี";
   };
 
   const handleAddItem = () => {
     const newItem: InvoiceItem = {
       id: Date.now().toString(),
-      description: '',
+      description: "",
       amount: 0,
     };
     setItems([...items, newItem]);
@@ -199,7 +460,11 @@ export default function TaxInvoiceForm({
     setItems(items.filter((item) => item.id !== id));
   };
 
-  const handleUpdateItem = (id: string, field: 'description' | 'amount', value: string | number) => {
+  const handleUpdateItem = (
+    id: string,
+    field: "description" | "amount",
+    value: string | number
+  ) => {
     setItems(
       items.map((item) =>
         item.id === id
@@ -234,30 +499,31 @@ export default function TaxInvoiceForm({
 
   const handleSave = async () => {
     if (!selectedCustomer) {
-      toast.error('กรุณาเลือกลูกค้า');
+      toast.error("กรุณาเลือกลูกค้า");
       return;
     }
 
-    if (items.length === 0) {
-      toast.error('กรุณาเพิ่มรายการสินค้า');
+    // สำหรับใบเสร็จ ไม่จำเป็นต้องมีรายการ
+    if (documentType !== "receipt" && items.length === 0) {
+      toast.error("กรุณาเพิ่มรายการสินค้า");
       return;
     }
 
     // เลือก API endpoint ตาม documentType
-    let apiUrl: string;
-    if (documentType === 'invoice') {
-      apiUrl = 'http://127.0.0.1:8000/api/invoices';
-    } else if (documentType === 'quotation') {
-      apiUrl = 'http://127.0.0.1:8000/api/quotations';
-    } else if (documentType === 'purchase_order') {
-      apiUrl = 'http://127.0.0.1:8000/api/purchase-orders';
-    } else {
-      apiUrl = 'http://127.0.0.1:8000/api/receipts';
+    let apiUrl: string = "";
+    if (documentType === "invoice") {
+      apiUrl = "http://127.0.0.1:8000/api/invoices";
+    } else if (documentType === "quotation") {
+      apiUrl = "http://127.0.0.1:8000/api/quotations";
+    } else if (documentType === "purchase_order") {
+      apiUrl = "http://127.0.0.1:8000/api/purchase-orders";
+    } else if (documentType === "receipt") {
+      apiUrl = "http://127.0.0.1:8000/api/receipts";
     }
 
     // สร้าง payload ตาม API ที่จะเรียก
     let payload;
-    if (documentType === 'invoice') {
+    if (documentType === "invoice") {
       // payload สำหรับ invoices API
       payload = {
         invoice_no: docNumber,
@@ -266,12 +532,16 @@ export default function TaxInvoiceForm({
         customer_name: selectedCustomer.name,
         customer_address: selectedCustomer.address,
         customer_tax_id: selectedCustomer.tax_id,
+        customer_branch_name:
+          customerBranchName || selectedCustomer.branch_name,
         customer_phone: selectedCustomer.phone,
         customer_email: selectedCustomer.email,
         reference_doc: selectedDocument,
         shipping_address: shippingAddress,
         shipping_phone: shippingPhone,
-        seller_name: salesperson, // เพิ่มชื่อผู้ขาย
+        seller_name: salesperson,
+        salesperson: salesperson,
+
         items: JSON.stringify(items), // แปลงเป็น JSON string
         notes,
         discount,
@@ -281,10 +551,11 @@ export default function TaxInvoiceForm({
         after_discount: calculateAfterDiscount(),
         vat: calculateVat(),
         grand_total: calculateGrandTotal(),
-        status: 'draft',
+        status: "draft",
         due_date: null,
+        doc_type: docCopyType, // เพิ่มประเภทเอกสาร (original/copy)
       };
-    } else if (documentType === 'quotation') {
+    } else if (documentType === "quotation") {
       // payload สำหรับ quotations API
       payload = {
         quotation_number: docNumber,
@@ -298,7 +569,11 @@ export default function TaxInvoiceForm({
         reference_doc: selectedDocument,
         shipping_address: shippingAddress,
         shipping_phone: shippingPhone,
-        seller_name: salesperson, // เพิ่มชื่อผู้ขาย
+        seller_name: salesperson,
+        salesperson: salesperson,
+        branch_name: selectedCustomer.branch_name,
+        customer_branch_name:
+          customerBranchName || selectedCustomer.branch_name,
         items: JSON.stringify(items), // แปลงเป็น JSON string
         notes,
         discount,
@@ -308,10 +583,11 @@ export default function TaxInvoiceForm({
         after_discount: calculateAfterDiscount(),
         vat: calculateVat(),
         grand_total: calculateGrandTotal(),
-        status: 'ร่าง',
+        status: "ร่าง",
         valid_until: null,
+        doc_type: docCopyType, // เพิ่มประเภทเอกสาร (original/copy)
       };
-    } else if (documentType === 'purchase_order') {
+    } else if (documentType === "purchase_order") {
       // payload สำหรับ purchase_orders API (ใช้ supplier แทน customer)
       payload = {
         po_number: docNumber,
@@ -322,9 +598,12 @@ export default function TaxInvoiceForm({
         supplier_tax_id: selectedCustomer.tax_id,
         supplier_phone: selectedCustomer.phone,
         supplier_email: selectedCustomer.email,
+        supplier_branch_name:
+          customerBranchName || selectedCustomer.branch_name,
         reference_doc: selectedDocument,
         shipping_address: shippingAddress,
         shipping_phone: shippingPhone,
+        buyer_name: salesperson,
         items: JSON.stringify(items), // แปลงเป็น JSON string
         notes,
         discount,
@@ -334,76 +613,114 @@ export default function TaxInvoiceForm({
         after_discount: calculateAfterDiscount(),
         vat: calculateVat(),
         grand_total: calculateGrandTotal(),
-        status: 'ร่าง',
+        status: "ร่าง",
         expected_delivery_date: null,
+        doc_type: docCopyType, // เพิ่มประเภทเอกสาร (original/copy)
       };
     } else {
       // payload สำหรับ receipts API
+      // Note: ส่งเฉพาะ fields ที่ backend รองรับ - อาจต้องปรับตามโครงสร้าง backend จริง
       payload = {
         receipt_no: docNumber,
         date: docDate,
         customer: selectedCustomer.name,
-        invoice_ref: selectedDocument || '-',
-        amount: calculateGrandTotal(),
-        status: 'ร่าง',
+        customer_address: selectedCustomer.address,
+        customer_tax_id: selectedCustomer.tax_id,
+        customer_phone: selectedCustomer.phone,
+        customer_email: selectedCustomer.email,
+        customer_branch_name:
+          customerBranchName || selectedCustomer.branch_name,
+        seller_name: salesperson,
+        salesperson: salesperson,
+        invoice_ref: selectedDocument || "-",
+        amount: calculateGrandTotal() || 0,
+        status: "ร่าง",
         description: notes || undefined,
+        doc_type: docCopyType,
       };
     }
 
     try {
-      console.log('Sending to API:', apiUrl);
-      console.log('Payload:', payload);
+      console.log("=== TaxInvoiceForm Save Debug ===");
+      console.log("Sending to API:", apiUrl);
+      console.log("Document Type:", documentType);
+      console.log("Selected Customer:", selectedCustomer);
+      console.log("Payload:", payload);
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
+      // If editData exists, call update endpoint (PUT) instead of POST to create
+      const isEditing = !!editData;
+      const endpoint = isEditing ? `${apiUrl}/${(editData as any).id}` : apiUrl;
+      console.log("Endpoint:", endpoint);
+      console.log("Method:", isEditing ? "PUT" : "POST");
+
+      const response = await fetch(endpoint, {
+        method: isEditing ? "PUT" : "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(payload),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
 
       // ตรวจสอบว่า response เป็น JSON หรือไม่
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
-        console.error('Response is not JSON:', text.substring(0, 200));
-        toast.error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง กรุณาตรวจสอบ console');
+        console.error("Response is not JSON:", text.substring(0, 200));
+        toast.error("เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง กรุณาตรวจสอบ console");
         return;
       }
 
       const result = await response.json();
-      console.log('Response data:', result);
+      console.log("Response data:", result);
 
       if (response.ok) {
-        let docTypeName = 'ใบเสร็จรับเงิน';
-        if (documentType === 'invoice') docTypeName = 'ใบแจ้งหนี้';
-        else if (documentType === 'quotation') docTypeName = 'ใบเสนอราคา';
+        let docTypeName = "ใบเสร็จรับเงิน";
+        if (documentType === "invoice") docTypeName = "ใบแจ้งหนี้";
+        else if (documentType === "quotation") docTypeName = "ใบเสนอราคา";
         toast.success(`บันทึก${docTypeName}สำเร็จ`);
         onSave(payload);
       } else {
-        console.error('API Error:', result);
+        console.error("API Error:", result);
         if (result.errors) {
           // Laravel validation errors
-          const errorMessages = Object.values(result.errors).flat().join(', ');
-          toast.error('ข้อผิดพลาด: ' + errorMessages);
+          const errorMessages = Object.values(result.errors).flat().join(", ");
+          toast.error("ข้อผิดพลาด: " + errorMessages);
         } else {
-          toast.error('เกิดข้อผิดพลาด: ' + (result.message || 'ไม่สามารถบันทึกได้'));
+          toast.error(
+            "เกิดข้อผิดพลาด: " + (result.message || "ไม่สามารถบันทึกได้")
+          );
         }
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + error);
+      console.error("Error:", error);
+      toast.error("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: " + error);
     }
   };
 
-  const activeCustomers = customers.filter((c: Customer) => c.status === 'active');
+  const activeCustomers = customers.filter(
+    (c: Customer) => c.status === "active"
+  );
+
+  // Apply grayscale when docCopyType is 'copy' - but NOT on images
+  // Using CSS class instead of inline style so we can exempt images
+  const containerClass = docCopyType === "copy" ? "copy-grayscale" : "";
 
   return (
-    <div className="min-h-screen p-6 space-y-6 bg-gray-50">
+    <div className={`min-h-screen p-6 space-y-6 bg-gray-50 ${containerClass}`}>
+      <style>{`
+        .copy-grayscale {
+          filter: grayscale(100%);
+          -webkit-filter: grayscale(100%);
+        }
+        .copy-grayscale img {
+          filter: none !important;
+          -webkit-filter: none !important;
+        }
+      `}</style>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl">{getDocumentTitle()}</h2>
@@ -418,30 +735,45 @@ export default function TaxInvoiceForm({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>เลขที่เอกสาร</Label>
-              <Input value={docNumber} onChange={(e) => setDocNumber(e.target.value)} />
+              <Input
+                value={docNumber}
+                onChange={(e) => setDocNumber(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <Label>ต้นฉบับ</Label>
-              <Select defaultValue="ต้นฉบับ">
+              <Label>ประเภทเอกสาร</Label>
+              <Select
+                value={docCopyType}
+                onValueChange={(value: "original" | "copy") =>
+                  setDocCopyType(value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ต้นฉบับ">ต้นฉบับ</SelectItem>
-                  <SelectItem value="สำเนา">สำเนา</SelectItem>
+                  <SelectItem value="original">ต้นฉบับ</SelectItem>
+                  <SelectItem value="copy">สำเนา</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>วันที่เริ่มต้น</Label>
-              <Input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} />
+              <Input
+                type="date"
+                value={docDate}
+                onChange={(e) => setDocDate(e.target.value)}
+              />
             </div>
           </div>
 
           {/* Source Document Selection */}
           <div className="space-y-2">
             <Label>เลือกเอกสาร</Label>
-            <Select value={selectedDocument} onValueChange={setSelectedDocument}>
+            <Select
+              value={selectedDocument}
+              onValueChange={setSelectedDocument}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="เลือกเอกสารต้นทาง..." />
               </SelectTrigger>
@@ -469,16 +801,20 @@ export default function TaxInvoiceForm({
                   {selectedCustomer ? (
                     <div className="w-full text-left">
                       <div className="flex gap-2">
-                        <span className="text-blue-600">{selectedCustomer.code}</span>
+                        <span className="text-blue-600">
+                          {selectedCustomer.code}
+                        </span>
                         <span>-</span>
                         <span>{selectedCustomer.name}</span>
                       </div>
                       {selectedCustomer.address && (
-                        <div className="mt-1 text-sm text-gray-500">{selectedCustomer.address}</div>
+                        <div className="mt-1 text-sm text-gray-500">
+                          {selectedCustomer.address}
+                        </div>
                       )}
                     </div>
                   ) : (
-                    'เลือกลูกค้า...'
+                    "เลือกลูกค้า..."
                   )}
                 </Button>
               </PopoverTrigger>
@@ -494,19 +830,23 @@ export default function TaxInvoiceForm({
                           value={`${customer.code} ${customer.name}`}
                           onSelect={() => {
                             setSelectedCustomer(customer);
-                            setShippingAddress(customer.address || '');
-                            setShippingPhone(customer.phone || '');
+                            setShippingAddress(customer.address || "");
+                            setShippingPhone(customer.phone || "");
                             setOpenCustomer(false);
                           }}
                           className="flex flex-col items-start py-3"
                         >
                           <div className="flex gap-2">
-                            <span className="text-blue-600">{customer.code}</span>
+                            <span className="text-blue-600">
+                              {customer.code}
+                            </span>
                             <span>-</span>
                             <span>{customer.name}</span>
                           </div>
                           {customer.address && (
-                            <div className="mt-1 text-sm text-gray-500">{customer.address}</div>
+                            <div className="mt-1 text-sm text-gray-500">
+                              {customer.address}
+                            </div>
                           )}
                         </CommandItem>
                       ))}
@@ -526,15 +866,17 @@ export default function TaxInvoiceForm({
               </div>
               <div className="space-y-1">
                 <div className="text-sm text-gray-600">ประเภท</div>
-                <div>{selectedCustomer.type || '-'}</div>
+                <div>{selectedCustomer.type || "-"}</div>
               </div>
               <div className="space-y-1">
                 <div className="text-sm text-gray-600">เบอร์โทร</div>
-                <div>{selectedCustomer.phone || '-'}</div>
+                <div>{selectedCustomer.phone || "-"}</div>
               </div>
               <div className="space-y-1">
-                <div className="text-sm text-gray-600">เลขประจำตัวผู้เสียภาษี</div>
-                <div>{selectedCustomer.tax_id || '-'}</div>
+                <div className="text-sm text-gray-600">
+                  เลขประจำตัวผู้เสียภาษี
+                </div>
+                <div>{selectedCustomer.tax_id || "-"}</div>
               </div>
             </div>
           )}
@@ -577,29 +919,42 @@ export default function TaxInvoiceForm({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-100">
-                    <TableHead className="w-[80px] text-center">ลำดับ (SRNO)</TableHead>
+                    <TableHead className="w-[80px] text-center">
+                      ลำดับ (NO)
+                    </TableHead>
                     <TableHead>สินค้า</TableHead>
-                    <TableHead className="w-[150px] text-right">ราคารวม (จำนวนเงิน)</TableHead>
-                    <TableHead className="w-[100px] text-right">รายการลบ (ใบสำคัญถอน)</TableHead>
+                    <TableHead className="w-[150px] text-right">
+                      ราคารวม (จำนวนเงิน)
+                    </TableHead>
+                    <TableHead className="w-[100px] text-right">
+                      รายการลบ (ใบสำคัญถอน)
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-gray-400">
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-gray-400"
+                      >
                         ไม่มีรายการ
                       </TableCell>
                     </TableRow>
                   ) : (
                     items.map((item, index) => (
                       <TableRow key={item.id}>
-                        <TableCell className="text-center">{index + 1}</TableCell>
+                        <TableCell className="text-center">
+                          {index + 1}
+                        </TableCell>
                         <TableCell>
                           <div className="space-y-2">
                             <Select
                               value={item.productId?.toString()}
                               onValueChange={(value) => {
-                                const product = products.find(p => p.id === parseInt(value));
+                                const product = products.find(
+                                  (p) => p.id === parseInt(value)
+                                );
                                 if (product) {
                                   handleSelectProduct(item.id, product);
                                 }
@@ -610,8 +965,14 @@ export default function TaxInvoiceForm({
                               </SelectTrigger>
                               <SelectContent>
                                 {products.map((product) => (
-                                  <SelectItem key={product.id} value={product.id.toString()}>
-                                    {product.name} - ฿{Number(product.sale_price).toLocaleString()}
+                                  <SelectItem
+                                    key={product.id}
+                                    value={product.id.toString()}
+                                  >
+                                    {product.name} - ฿
+                                    {Number(
+                                      product.sale_price
+                                    ).toLocaleString()}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -619,7 +980,11 @@ export default function TaxInvoiceForm({
                             <Input
                               value={item.description}
                               onChange={(e) =>
-                                handleUpdateItem(item.id, 'description', e.target.value)
+                                handleUpdateItem(
+                                  item.id,
+                                  "description",
+                                  e.target.value
+                                )
                               }
                               placeholder="หรือพิมพ์รายละเอียดเอง..."
                             />
@@ -630,7 +995,11 @@ export default function TaxInvoiceForm({
                             type="number"
                             value={item.amount}
                             onChange={(e) =>
-                              handleUpdateItem(item.id, 'amount', parseFloat(e.target.value) || 0)
+                              handleUpdateItem(
+                                item.id,
+                                "amount",
+                                parseFloat(e.target.value) || 0
+                              )
                             }
                             className="text-right"
                             placeholder="0.00"
@@ -657,15 +1026,28 @@ export default function TaxInvoiceForm({
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>วันที่เอกสาร</Label>
-              <Input type="date" value={docDate} onChange={(e) => setDocDate(e.target.value)} />
+              <Input
+                type="date"
+                value={docDate}
+                onChange={(e) => setDocDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>วันที่ชำระเงิน</Label>
-              <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+              <Input
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>การคิดภาษี</Label>
-              <Select value={taxType} onValueChange={(value: 'excluding' | 'including' | 'none') => setTaxType(value)}>
+              <Select
+                value={taxType}
+                onValueChange={(value: "excluding" | "including" | "none") =>
+                  setTaxType(value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -711,7 +1093,9 @@ export default function TaxInvoiceForm({
                   <Input
                     type="number"
                     value={discount}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setDiscount(parseFloat(e.target.value) || 0)
+                    }
                     className="w-20 text-right"
                     min="0"
                     max="100"
@@ -749,10 +1133,17 @@ export default function TaxInvoiceForm({
 
           {/* Action Buttons */}
           <div className="flex justify-start gap-2 pt-4 border-t">
-            <Button onClick={handleSave} className="bg-cyan-500 hover:bg-cyan-600">
+            <Button
+              onClick={handleSave}
+              className="bg-cyan-500 hover:bg-cyan-600"
+            >
               บันทึก
             </Button>
-            <Button variant="outline" onClick={onCancel} className="text-red-500 border-red-500">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="text-red-500 border-red-500"
+            >
               ยกเลิก
             </Button>
           </div>

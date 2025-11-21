@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import type { UserRole } from '../../types';
+import { useState, useEffect } from "react";
+import { apiClient, API_BASE_URL } from "../../services/api";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import type { UserRole } from "../../types";
 import {
   TrendingUp,
   TrendingDown,
@@ -9,7 +9,7 @@ import {
   Users,
   DollarSign,
   Receipt,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -24,7 +24,7 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from "recharts";
 
 interface DashboardPageProps {
   userRole: UserRole;
@@ -61,6 +61,10 @@ interface RecentTransaction {
   date: string;
 }
 
+interface RecentTransactionWithTimestamp extends RecentTransaction {
+  timestamp?: number;
+}
+
 interface Receipt {
   id: number;
   receipt_no: string;
@@ -70,19 +74,53 @@ interface Receipt {
   status: string;
 }
 
-interface ReceiveVoucher {
-  id: number;
-  voucher_no: string;
-  date: string;
-  payer: string;
-  amount: number;
-  status: string;
-}
+// ReceiveVoucher type is declared in other modules; we don't rely on it directly here
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+// ensure API_BASE_URL points to the backend defined in .env (VITE_API_BASE_URL)
 
 export default function DashboardPage({ userRole }: DashboardPageProps) {
+  const canViewFinance = userRole === "admin" || userRole === "account";
+
+  const isPaidStatus = (s?: string) => {
+    if (!s) return false;
+    const v = String(s).toLowerCase();
+    return (
+      ["รับแล้ว", "paid", "completed", "received"].includes(v) ||
+      v.includes("paid") ||
+      v.includes("รับ")
+    );
+  };
+
+  const isDeliveredStatus = (s?: string) => {
+    if (!s) return false;
+    const v = String(s).toLowerCase();
+    return (
+      ["จัดส่งแล้ว", "delivered", "shipped", "received"].includes(v) ||
+      v.includes("deliver") ||
+      v.includes("จัดส่ง")
+    );
+  };
+
+  const isPending = (s?: string) => {
+    if (!s) return false;
+    const v = String(s).toLowerCase();
+    return (
+      ["pending", "รอชำระ", "waiting"].includes(v) ||
+      v.includes("pending") ||
+      v.includes("รอ")
+    );
+  };
+
+  const isPayable = (s?: string) => {
+    if (!s) return false;
+    const v = String(s).toLowerCase();
+    return (
+      ["รอจ่าย", "รอดำเนินการ", "waiting", "unpaid", "to pay"].includes(v) ||
+      v.includes("unpaid") ||
+      v.includes("รอ")
+    );
+  };
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
@@ -96,7 +134,10 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
   });
   const [monthlySales, setMonthlySales] = useState<MonthlySales[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<
+    RecentTransactionWithTimestamp[]
+  >([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -105,6 +146,8 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setErrorMessage(null);
+      console.debug("Dashboard fetch: using API base", API_BASE_URL);
 
       // Fetch all data in parallel with error handling
       const [
@@ -113,17 +156,27 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
         receiveVouchersRes,
         paymentVouchersRes,
       ] = await Promise.allSettled([
-        axios.get(`${API_BASE_URL}/invoices`).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/purchase-orders`).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/receive-vouchers`).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/payment-vouchers`).catch(() => ({ data: [] })),
+        apiClient.get("/invoices").catch(() => ({ data: [] })),
+        apiClient.get("/purchase-orders").catch(() => ({ data: [] })),
+        apiClient.get("/receive-vouchers").catch(() => ({ data: [] })),
+        apiClient.get("/payment-vouchers").catch(() => ({ data: [] })),
       ]);
 
       // Extract data from settled promises
-      const invoices = invoicesRes.status === 'fulfilled' ? invoicesRes.value.data : [];
-      const purchaseOrders = purchaseOrdersRes.status === 'fulfilled' ? purchaseOrdersRes.value.data : [];
-      const receiveVouchers = receiveVouchersRes.status === 'fulfilled' ? receiveVouchersRes.value.data : [];
-      const paymentVouchers = paymentVouchersRes.status === 'fulfilled' ? paymentVouchersRes.value.data : [];
+      const invoices =
+        invoicesRes.status === "fulfilled" ? invoicesRes.value.data : [];
+      const purchaseOrders =
+        purchaseOrdersRes.status === "fulfilled"
+          ? purchaseOrdersRes.value.data
+          : [];
+      const receiveVouchers =
+        receiveVouchersRes.status === "fulfilled"
+          ? receiveVouchersRes.value.data
+          : [];
+      const paymentVouchers =
+        paymentVouchersRes.status === "fulfilled"
+          ? paymentVouchersRes.value.data
+          : [];
 
       // Calculate stats
       calculateStats(
@@ -140,13 +193,66 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
       calculateCategoryData(invoices);
 
       // Get recent transactions
-      getRecentTransactions(
-        receiveVouchers,
-        invoices
-      );
+      getRecentTransactions(receiveVouchers, invoices);
 
+      // If everything is empty and env is non-default, try a common fallback port
+      const totalResults =
+        invoices.length +
+        purchaseOrders.length +
+        receiveVouchers.length +
+        paymentVouchers.length;
+      if (totalResults === 0 && API_BASE_URL.includes(":10000")) {
+        console.debug(
+          "Dashboard fetch: no data found, trying fallback port 8000"
+        );
+        try {
+          apiClient.defaults.baseURL = "http://127.0.0.1:8000/api";
+          const [inv2, po2, rv2, pv2] = await Promise.allSettled([
+            apiClient.get("/invoices").catch(() => ({ data: [] })),
+            apiClient.get("/purchase-orders").catch(() => ({ data: [] })),
+            apiClient.get("/receive-vouchers").catch(() => ({ data: [] })),
+            apiClient.get("/payment-vouchers").catch(() => ({ data: [] })),
+          ]);
+
+          const invoices2 = inv2.status === "fulfilled" ? inv2.value.data : [];
+          const purchaseOrders2 =
+            po2.status === "fulfilled" ? po2.value.data : [];
+          const receiveVouchers2 =
+            rv2.status === "fulfilled" ? rv2.value.data : [];
+          const paymentVouchers2 =
+            pv2.status === "fulfilled" ? pv2.value.data : [];
+
+          if (
+            invoices2.length ||
+            purchaseOrders2.length ||
+            receiveVouchers2.length ||
+            paymentVouchers2.length
+          ) {
+            // Found data on fallback — recalc
+            console.debug(
+              "Dashboard fetch: found data on fallback 8000 — updating state"
+            );
+            calculateStats(
+              invoices2,
+              purchaseOrders2,
+              receiveVouchers2,
+              paymentVouchers2
+            );
+            calculateMonthlySales(receiveVouchers2, purchaseOrders2);
+            calculateCategoryData(invoices2);
+            getRecentTransactions(receiveVouchers2, invoices2);
+          } else {
+            setErrorMessage(`ไม่พบข้อมูลบน ${API_BASE_URL} หรือ fallback`);
+          }
+        } catch (err) {
+          console.error("Fallback fetch failed", err);
+          setErrorMessage(
+            `ไม่สามารถเชื่อมต่อกับ API (${API_BASE_URL} และ fallback)`
+          );
+        }
+      }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error("Error fetching dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -160,22 +266,22 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
   ) => {
     // สรุปยอดขาย = ใบสำคัญรับเงิน สถานะ "รับแล้ว"
     const totalSales = receiveVouchers
-      .filter(rv => rv.status === 'รับแล้ว')
+      .filter((rv) => isPaidStatus(rv.status))
       .reduce((sum, rv) => sum + Number(rv.amount || 0), 0);
 
     // สรุปยอดซื้อ = ใบสั่งซื้อ สถานะ "จัดส่งแล้ว"
     const totalPurchases = purchaseOrders
-      .filter(po => po.status === 'จัดส่งแล้ว')
+      .filter((po) => isDeliveredStatus(po.status))
       .reduce((sum, po) => sum + Number(po.grand_total || 0), 0);
 
     // ยอดลูกหนี้ = ใบแจ้งหนี้ สถานะ "รอชำระ" (pending)
     const totalReceivables = invoices
-      .filter(inv => inv.status === 'pending')
+      .filter((inv) => isPending(inv.status))
       .reduce((sum, inv) => sum + Number(inv.grand_total || 0), 0);
 
     // ยอดเจ้าหนี้ = ใบสำคัญจ่ายเงิน สถานะ "รอจ่าย"
     const totalPayables = paymentVouchers
-      .filter(pv => pv.status === 'รอจ่าย')
+      .filter((pv) => isPayable(pv.status))
       .reduce((sum, pv) => sum + Number(pv.amount || 0), 0);
 
     setStats({
@@ -190,29 +296,61 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
     });
   };
 
-  const calculateMonthlySales = (receiveVouchers: any[], purchaseOrders: any[]): void => {
-    const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const calculateMonthlySales = (
+    receiveVouchers: any[],
+    purchaseOrders: any[]
+  ): void => {
+    const monthNames = [
+      "ม.ค.",
+      "ก.พ.",
+      "มี.ค.",
+      "เม.ย.",
+      "พ.ค.",
+      "มิ.ย.",
+      "ก.ค.",
+      "ส.ค.",
+      "ก.ย.",
+      "ต.ค.",
+      "พ.ย.",
+      "ธ.ค.",
+    ];
     const currentDate = new Date();
     const last6Months: MonthlySales[] = [];
 
     for (let i = 5; i >= 0; i--) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const date = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() - i,
+        1
+      );
       const month = date.getMonth();
       const year = date.getFullYear();
 
       // ยอดขาย = ใบสำคัญรับเงิน สถานะ "รับแล้ว"
       const monthlySalesAmount = receiveVouchers
-        .filter(rv => {
+        .filter((rv) => {
+          const rvStatusOk = isPaidStatus(rv.status);
           const rvDate = new Date(rv.date || rv.voucher_date);
-          return rv.status === 'รับแล้ว' && rvDate.getMonth() === month && rvDate.getFullYear() === year;
+          if (isNaN(rvDate.getTime())) return false;
+          return (
+            rvStatusOk &&
+            rvDate.getMonth() === month &&
+            rvDate.getFullYear() === year
+          );
         })
         .reduce((sum, rv) => sum + Number(rv.amount || 0), 0);
 
       // ยอดซื้อ = ใบสั่งซื้อ สถานะ "จัดส่งแล้ว"
       const monthlyPurchaseAmount = purchaseOrders
-        .filter(po => {
+        .filter((po) => {
+          const poStatus = isDeliveredStatus(po.status);
           const poDate = new Date(po.date || po.order_date || po.doc_date);
-          return po.status === 'จัดส่งแล้ว' && poDate.getMonth() === month && poDate.getFullYear() === year;
+          if (isNaN(poDate.getTime())) return false;
+          return (
+            poStatus &&
+            poDate.getMonth() === month &&
+            poDate.getFullYear() === year
+          );
         })
         .reduce((sum, po) => sum + Number(po.grand_total || 0), 0);
 
@@ -230,8 +368,8 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
     // Group by customer from invoices
     const customerSales: { [key: string]: number } = {};
 
-    invoices.forEach(inv => {
-      const customer = inv.customer_name || 'ไม่ระบุ';
+    invoices.forEach((inv) => {
+      const customer = inv.customer_name || "ไม่ระบุ";
       const amount = Number(inv.grand_total || 0);
       if (customerSales[customer]) {
         customerSales[customer] += amount;
@@ -252,33 +390,50 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
     receiveVouchers: any[],
     invoices: any[]
   ): void => {
-    const transactions: RecentTransaction[] = [];
+    const transactions: RecentTransactionWithTimestamp[] = [];
 
     // Add receive vouchers (ใบสำคัญรับเงิน)
-    receiveVouchers.slice(0, 3).forEach(rv => {
+    receiveVouchers.slice(0, 3).forEach((rv) => {
       const amount = Number(rv.amount || 0);
       transactions.push({
-        type: 'ใบสำคัญรับเงิน',
-        no: rv.voucher_no || rv.doc_number || '-',
-        customer: rv.payer || rv.customer_name || '-',
-        amount: `฿${amount.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
-        date: new Date(rv.date || rv.voucher_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+        type: "ใบสำคัญรับเงิน",
+        no: rv.voucher_no || rv.doc_number || "-",
+        customer: rv.payer || rv.customer_name || "-",
+        amount: `฿${amount.toLocaleString("th-TH", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })}`,
+        date: new Date(rv.date || rv.voucher_date).toLocaleDateString("th-TH", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        timestamp: new Date(rv.date || rv.voucher_date).getTime() || Date.now(),
       });
     });
 
     // Add invoices (ใบแจ้งหนี้)
-    invoices.slice(0, 2).forEach(inv => {
+    invoices.slice(0, 2).forEach((inv) => {
       const amount = Number(inv.grand_total || 0);
       transactions.push({
-        type: 'ใบแจ้งหนี้',
-        no: inv.invoice_no || inv.doc_number || '-',
-        customer: inv.customer_name || '-',
-        amount: `฿${amount.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
-        date: new Date(inv.invoice_date || inv.doc_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }),
+        type: "ใบแจ้งหนี้",
+        no: inv.invoice_no || inv.doc_number || "-",
+        customer: inv.customer_name || "-",
+        amount: `฿${amount.toLocaleString("th-TH", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })}`,
+        date: new Date(inv.invoice_date || inv.doc_date).toLocaleDateString(
+          "th-TH",
+          { day: "numeric", month: "short", year: "numeric" }
+        ),
+        timestamp:
+          new Date(inv.invoice_date || inv.doc_date).getTime() || Date.now(),
       });
     });
 
-    // Sort by date and take latest 4
+    // Sort by timestamp (most recent first) and take latest 4
+    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     setRecentTransactions(transactions.slice(0, 4));
   };
   if (loading) {
@@ -294,28 +449,46 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
 
   return (
     <div className="space-y-6">
+      {errorMessage && (
+        <div className="mb-4 p-3 rounded bg-red-50 text-red-700 border border-red-100">
+          ไม่สามารถดึงข้อมูลจาก API ได้: {errorMessage}
+        </div>
+      )}
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm">สรุปยอดขาย</CardTitle>
-            <DollarSign className="w-4 h-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">฿{stats.totalSales.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</div>
-            <p className="text-xs text-gray-500 flex items-center mt-1">
-              {stats.salesGrowth >= 0 ? (
-                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
-              )}
-              <span className={stats.salesGrowth >= 0 ? "text-green-500" : "text-red-500"}>
-                {stats.salesGrowth >= 0 ? '+' : ''}{stats.salesGrowth.toFixed(1)}%
-              </span>
-              <span className="ml-1">จากเดือนที่แล้ว</span>
-            </p>
-          </CardContent>
-        </Card>
+        {canViewFinance && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm">สรุปยอดขาย</CardTitle>
+              <DollarSign className="w-4 h-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl">
+                ฿
+                {stats.totalSales.toLocaleString("th-TH", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+              <p className="text-xs text-gray-500 flex items-center mt-1">
+                {stats.salesGrowth >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                )}
+                <span
+                  className={
+                    stats.salesGrowth >= 0 ? "text-green-500" : "text-red-500"
+                  }
+                >
+                  {stats.salesGrowth >= 0 ? "+" : ""}
+                  {stats.salesGrowth.toFixed(1)}%
+                </span>
+                <span className="ml-1">จากเดือนที่แล้ว</span>
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -323,15 +496,26 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
             <ShoppingCart className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">฿{stats.totalPurchases.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl">
+              ฿
+              {stats.totalPurchases.toLocaleString("th-TH", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </div>
             <p className="text-xs text-gray-500 flex items-center mt-1">
               {stats.purchasesGrowth >= 0 ? (
                 <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
               )}
-              <span className={stats.purchasesGrowth >= 0 ? "text-green-500" : "text-red-500"}>
-                {stats.purchasesGrowth >= 0 ? '+' : ''}{stats.purchasesGrowth.toFixed(1)}%
+              <span
+                className={
+                  stats.purchasesGrowth >= 0 ? "text-green-500" : "text-red-500"
+                }
+              >
+                {stats.purchasesGrowth >= 0 ? "+" : ""}
+                {stats.purchasesGrowth.toFixed(1)}%
               </span>
               <span className="ml-1">จากเดือนที่แล้ว</span>
             </p>
@@ -344,15 +528,28 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
             <Receipt className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">฿{stats.totalReceivables.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl">
+              ฿
+              {stats.totalReceivables.toLocaleString("th-TH", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </div>
             <p className="text-xs text-gray-500 flex items-center mt-1">
               {stats.receivablesGrowth >= 0 ? (
                 <TrendingUp className="w-4 h-4 text-red-500 mr-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-green-500 mr-1" />
               )}
-              <span className={stats.receivablesGrowth >= 0 ? "text-red-500" : "text-green-500"}>
-                {stats.receivablesGrowth >= 0 ? '+' : ''}{stats.receivablesGrowth.toFixed(1)}%
+              <span
+                className={
+                  stats.receivablesGrowth >= 0
+                    ? "text-red-500"
+                    : "text-green-500"
+                }
+              >
+                {stats.receivablesGrowth >= 0 ? "+" : ""}
+                {stats.receivablesGrowth.toFixed(1)}%
               </span>
               <span className="ml-1">จากเดือนที่แล้ว</span>
             </p>
@@ -365,15 +562,26 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
             <Users className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">฿{stats.totalPayables.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl">
+              ฿
+              {stats.totalPayables.toLocaleString("th-TH", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </div>
             <p className="text-xs text-gray-500 flex items-center mt-1">
               {stats.payablesGrowth >= 0 ? (
                 <TrendingUp className="w-4 h-4 text-red-500 mr-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-green-500 mr-1" />
               )}
-              <span className={stats.payablesGrowth >= 0 ? "text-red-500" : "text-green-500"}>
-                {stats.payablesGrowth >= 0 ? '+' : ''}{stats.payablesGrowth.toFixed(1)}%
+              <span
+                className={
+                  stats.payablesGrowth >= 0 ? "text-red-500" : "text-green-500"
+                }
+              >
+                {stats.payablesGrowth >= 0 ? "+" : ""}
+                {stats.payablesGrowth.toFixed(1)}%
               </span>
               <span className="ml-1">จากเดือนที่แล้ว</span>
             </p>
@@ -447,7 +655,10 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
                     dataKey="value"
                   >
                     {categoryData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -469,9 +680,14 @@ export default function DashboardPage({ userRole }: DashboardPageProps) {
             <div className="space-y-4">
               {recentTransactions.length > 0 ? (
                 recentTransactions.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b last:border-0">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between py-2 border-b last:border-0"
+                  >
                     <div>
-                      <p className="text-sm">{item.type} #{item.no}</p>
+                      <p className="text-sm">
+                        {item.type} #{item.no}
+                      </p>
                       <p className="text-xs text-gray-500">{item.customer}</p>
                     </div>
                     <div className="text-right">
