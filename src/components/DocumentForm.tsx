@@ -277,7 +277,7 @@ export default function DocumentForm({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+              <PopoverContent className="w-[600px] popup-card text-popover-foreground overflow-visible p-2">
                 <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
                   <CommandInput placeholder="ค้นหาลูกค้า/คู่ค้า..." className="bg-transparent rounded-md border px-2" />
                   <CommandList>
@@ -397,7 +397,7 @@ export default function DocumentForm({
                                 {item.productName || "เลือกสินค้า..."}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[400px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+                            <PopoverContent className="w-[400px] popup-card text-popover-foreground overflow-visible p-2">
                               <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
                                 <CommandInput placeholder="ค้นหาสินค้า..." className="bg-transparent rounded-md border px-2" />
                                 <CommandList>

@@ -777,7 +777,7 @@ export default function TaxInvoiceForm({
               <SelectTrigger className="w-full justify-between h-auto min-h-[40px]" showIcon={false}>
                 <SelectValue placeholder="เลือกเอกสารต้นทาง..." />
               </SelectTrigger>
-              <SelectContent className="w-[600px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+              <SelectContent className="w-[600px] popup-card text-popover-foreground overflow-visible p-2">
                 {sourceDocuments.map((doc) => (
                   <SelectItem key={doc.id} value={doc.id} showIndicator={false}>
                     {doc.code} - {doc.name}
@@ -818,7 +818,7 @@ export default function TaxInvoiceForm({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+              <PopoverContent className="w-[600px] popup-card text-popover-foreground overflow-visible p-2">
                 <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
                   <CommandInput placeholder="ค้นหาลูกค้า..." className="bg-transparent rounded-md border px-2" />
                   <CommandList>
@@ -1051,7 +1051,7 @@ export default function TaxInvoiceForm({
                 <SelectTrigger className="w-full justify-between h-auto min-h-[40px]" showIcon={false}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="w-[240px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+                <SelectContent className="w-[240px] popup-card text-popover-foreground overflow-visible p-2">
                   <SelectItem value="excluding" showIndicator={false}>Excluding Vat</SelectItem>
                   <SelectItem value="including" showIndicator={false}>Including Vat</SelectItem>
                   <SelectItem value="none" showIndicator={false}>None Vat</SelectItem>

@@ -372,7 +372,7 @@ export default function PaymentVoucherForm({
                 <SelectTrigger className="w-full justify-between h-auto min-h-[40px]" showIcon={false}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="w-[240px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+                <SelectContent className="w-[240px] popup-card text-popover-foreground overflow-visible p-2">
                   <SelectItem value="โอนเงิน" showIndicator={false}>โอนเงิน</SelectItem>
                   <SelectItem value="เงินสด" showIndicator={false}>เงินสด</SelectItem>
                   <SelectItem value="เช็ค" showIndicator={false}>เช็ค</SelectItem>
@@ -397,7 +397,7 @@ export default function PaymentVoucherForm({
                     : "เลือกผู้รับเงิน..."}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+              <PopoverContent className="w-[600px] popup-card text-popover-foreground overflow-visible p-2">
                 <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
                   <CommandInput placeholder="ค้นหาผู้รับเงิน..." className="bg-transparent rounded-md border px-2" />
                   <CommandList>
@@ -590,7 +590,7 @@ export default function PaymentVoucherForm({
                 <SelectTrigger className="w-full justify-between h-auto min-h-[40px]" showIcon={false}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="w-[240px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+                <SelectContent className="w-[240px] popup-card text-popover-foreground overflow-visible p-2">
                   <SelectItem value="excluding" showIndicator={false}>Excluding Vat</SelectItem>
                   <SelectItem value="including" showIndicator={false}>Including Vat</SelectItem>
                   <SelectItem value="none" showIndicator={false}>None Vat</SelectItem>

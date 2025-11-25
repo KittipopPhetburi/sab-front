@@ -71,7 +71,7 @@ function SelectContent({
         position={position}
         className={cn(
           // กล่อง popup หลัก
-          "relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-white bg-popover text-popover-foreground shadow-md",
+          "relative z-50 min-w-[8rem] overflow-hidden popup-card text-popover-foreground",
 
           // แอนิเมชันเปิด–ปิด
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
