@@ -504,7 +504,6 @@ export default function WithholdingTaxForm({
                     onChange={(e) => setRepresentativeTaxId(e.target.value)}
                     maxLength={13}
                     placeholder="0-0000-00000-00-0"
-                    required
                   />
                 </div>
                 <div>
@@ -515,7 +514,6 @@ export default function WithholdingTaxForm({
                     id="representativeName"
                     value={representativeName}
                     onChange={(e) => setRepresentativeName(e.target.value)}
-                    required
                   />
                 </div>
                 <div>
