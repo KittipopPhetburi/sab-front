@@ -1048,10 +1048,10 @@ export default function TaxInvoiceForm({
                   setTaxType(value)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full justify-between h-auto min-h-[40px]" showIcon={false}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-[240px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
                   <SelectItem value="excluding" showIndicator={false}>Excluding Vat</SelectItem>
                   <SelectItem value="including" showIndicator={false}>Including Vat</SelectItem>
                   <SelectItem value="none" showIndicator={false}>None Vat</SelectItem>
