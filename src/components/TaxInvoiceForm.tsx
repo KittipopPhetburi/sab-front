@@ -774,12 +774,12 @@ export default function TaxInvoiceForm({
               value={selectedDocument}
               onValueChange={setSelectedDocument}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full justify-between h-auto min-h-[40px]" showIcon={false}>
                 <SelectValue placeholder="เลือกเอกสารต้นทาง..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-[600px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
                 {sourceDocuments.map((doc) => (
-                  <SelectItem key={doc.id} value={doc.id}>
+                  <SelectItem key={doc.id} value={doc.id} showIndicator={false}>
                     {doc.code} - {doc.name}
                   </SelectItem>
                 ))}
@@ -818,9 +818,9 @@ export default function TaxInvoiceForm({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] p-0">
-                <Command>
-                  <CommandInput placeholder="ค้นหาลูกค้า..." />
+              <PopoverContent className="w-[600px] bg-white text-popover-foreground rounded-md border shadow-md overflow-visible p-2">
+                <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
+                  <CommandInput placeholder="ค้นหาลูกค้า..." className="bg-transparent rounded-md border px-2" />
                   <CommandList>
                     <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
                     <CommandGroup>
@@ -1052,9 +1052,9 @@ export default function TaxInvoiceForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="excluding">Excluding Vat</SelectItem>
-                  <SelectItem value="including">Including Vat</SelectItem>
-                  <SelectItem value="none">None Vat</SelectItem>
+                  <SelectItem value="excluding" showIndicator={false}>Excluding Vat</SelectItem>
+                  <SelectItem value="including" showIndicator={false}>Including Vat</SelectItem>
+                  <SelectItem value="none" showIndicator={false}>None Vat</SelectItem>
                 </SelectContent>
               </Select>
             </div>
