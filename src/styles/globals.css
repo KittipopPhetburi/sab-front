@@ -103,18 +103,32 @@ textarea::placeholder {
 }
 
 /* 🧾 Dropdown / Popover / Menu */
-[role="listbox"],
-[role="dialog"],
-[role="menu"],
-div[data-radix-popper-content-wrapper],
-div[class*="popover"],
-div[class*="dropdown"] {
-  background-color: #ffffff !important;
-  color: #111111 !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+/*
+  Restrict the dropdown/popover styles to specific data-slot elements to
+  avoid styling all elements with generic roles such as `dialog`, `listbox`
+  that may cause nested controls to pick up the border & shadow and create
+  the visual "stacked frames" issue. Target the `data-slot` attributes used
+  by our UI components (Radix + custom wrappers).
+*/
+[data-slot="popover-content"],
+[data-slot="select-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="context-menu-content"] {
+  /* Keep the layout defaults for content slots to ensure a consistent
+     padding and rounding. We avoid forcing background and shadow here
+     because components themselves apply the popup-card class for
+     visual consistency. */
   border-radius: 0.75rem;
   padding: 0.25rem 0.5rem;
+}
+
+/* Utility class for a reusable popup card style */
+.popup-card {
+  background-color: var(--card, #ffffff) !important;
+  color: var(--card-foreground, #111111) !important;
+  border: 1px solid var(--border, #e5e7eb) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07) !important;
 }
 
 /* 🔘 ปุ่ม */

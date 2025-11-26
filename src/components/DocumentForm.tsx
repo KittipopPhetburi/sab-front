@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Plus, Trash2 } from "lucide-react";
+import { HardDriveDownload, Plus, Trash2 } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -277,11 +277,11 @@ export default function DocumentForm({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] p-0">
-                <Command>
-                  <CommandInput placeholder="ค้นหาลูกค้า/คู่ค้า..." />
+              <PopoverContent className="w-[600px] popup-card text-popover-foreground overflow-visible p-2">
+                <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
+                  <CommandInput placeholder="ค้นหาลูกค้า/คู่ค้า..." className="bg-transparent rounded-md border px-2" />
                   <CommandList>
-                    <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
+                    <CommandEmpty>ไม่พบข้อมูล</CommandEmpty> 
                     <CommandGroup>
                       {activeCustomers.map((customer) => (
                         <CommandItem
@@ -397,9 +397,9 @@ export default function DocumentForm({
                                 {item.productName || "เลือกสินค้า..."}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0">
-                              <Command>
-                                <CommandInput placeholder="ค้นหาสินค้า..." />
+                            <PopoverContent className="w-[400px] popup-card text-popover-foreground overflow-visible p-2">
+                              <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
+                                <CommandInput placeholder="ค้นหาสินค้า..." className="bg-transparent rounded-md border px-2" />
                                 <CommandList>
                                   <CommandEmpty>ไม่พบสินค้า</CommandEmpty>
                                   <CommandGroup>
@@ -493,7 +493,7 @@ export default function DocumentForm({
                 rows={6}
               />
             </div>
-
+            {/* test push*/ }
             {/* Summary */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">

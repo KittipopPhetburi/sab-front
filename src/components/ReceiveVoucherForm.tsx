@@ -371,9 +371,9 @@ export default function ReceiveVoucherForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="โอนเงิน">โอนเงิน</SelectItem>
-                  <SelectItem value="เงินสด">เงินสด</SelectItem>
-                  <SelectItem value="เช็ค">เช็ค</SelectItem>
+                  <SelectItem value="โอนเงิน" showIndicator={false}>โอนเงิน</SelectItem>
+                  <SelectItem value="เงินสด" showIndicator={false}>เงินสด</SelectItem>
+                  <SelectItem value="เช็ค" showIndicator={false}>เช็ค</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -393,9 +393,9 @@ export default function ReceiveVoucherForm({
                   {selectedCustomer ? selectedCustomer.name : "เลือกลูกค้า..."}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] p-0">
-                <Command>
-                  <CommandInput placeholder="ค้นหาลูกค้า..." />
+              <PopoverContent className="w-[600px] popup-card text-popover-foreground overflow-visible p-2">
+                <Command className="bg-transparent shadow-none rounded-none m-0 p-2">
+                  <CommandInput placeholder="ค้นหาลูกค้า..." className="bg-transparent rounded-md border px-2" />
                   <CommandList>
                     <CommandEmpty>ไม่พบลูกค้า</CommandEmpty>
                     <CommandGroup>
@@ -587,9 +587,9 @@ export default function ReceiveVoucherForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="excluding">Excluding Vat</SelectItem>
-                  <SelectItem value="including">Including Vat</SelectItem>
-                  <SelectItem value="none">None Vat</SelectItem>
+                  <SelectItem value="excluding" showIndicator={false}>Excluding Vat</SelectItem>
+                  <SelectItem value="including" showIndicator={false}>Including Vat</SelectItem>
+                  <SelectItem value="none" showIndicator={false}>None Vat</SelectItem>
                 </SelectContent>
               </Select>
             </div>
