@@ -92,6 +92,16 @@ interface Receipt {
   after_discount?: number;
   vat?: number;
   grand_total?: number;
+  items?:
+    | string
+    | Array<{
+        id: string;
+        description: string;
+        qty?: number;
+        unit?: string;
+        price?: number;
+        amount: number;
+      }>;
 }
 
 const API_URL = "http://127.0.0.1:8000/api/receipts";
@@ -516,7 +526,55 @@ const vatAmount = Number(
       }
       return desc;
     };
+
+    // Parse items from receipt data
+    let receiptItems: Array<{
+      id: string;
+      description: string;
+      qty?: number;
+      unit?: string;
+      price?: number;
+      amount: number;
+    }> = [];
+
+    try {
+      if (item.items && typeof item.items === "string") {
+        receiptItems = JSON.parse(item.items);
+      } else if (Array.isArray(item.items)) {
+        receiptItems = item.items;
+      }
+    } catch (e) {
+      console.error("Failed to parse receipt items:", e);
+    }
+
+    // If no items parsed, create a default item
+    if (receiptItems.length === 0) {
+      receiptItems = [
+        {
+          id: "1",
+          description: cleanDescription(item.description),
+          qty: 1,
+          unit: "",
+          price: subtotal,
+          amount: subtotal,
+        },
+      ];
+    }
+
     const ROWS_ON_A4 = 10;
+
+    // Pad items to fill at least one page
+    const paddedItems = [...receiptItems];
+    while (paddedItems.length < ROWS_ON_A4) {
+      paddedItems.push({
+        id: `empty-${paddedItems.length}`,
+        description: "",
+        qty: undefined,
+        unit: "",
+        price: undefined,
+        amount: 0,
+      });
+    }
 
     const htmlContent = `
   <!DOCTYPE html>
@@ -990,7 +1048,7 @@ text-align: center;
             i.id.startsWith("empty-") ? "" : i.qty || 1
           }</td>
           <td class="text-center">${
-            i.id.startsWith("empty-") ? "" : i.unit || ""
+            i.id.startsWith("empty-") ? "" : i.unit || "-"
           }</td>
           <td class="text-right">${
             i.id.startsWith("empty-")
