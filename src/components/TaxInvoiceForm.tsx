@@ -39,6 +39,9 @@ interface InvoiceItem {
   id: string;
   productId?: number;
   description: string;
+  qty?: number;
+  unit?: string;
+  price?: number;
   amount: number;
 }
 
@@ -436,6 +439,9 @@ export default function TaxInvoiceForm({
     const newItem: InvoiceItem = {
       id: Date.now().toString(),
       description: "",
+      qty: 1,
+      unit: "",
+      price: 0,
       amount: 0,
     };
     setItems([...items, newItem]);
@@ -446,11 +452,14 @@ export default function TaxInvoiceForm({
       items.map((item) =>
         item.id === itemId
           ? {
-              ...item,
-              productId: product.id,
-              description: product.name,
-              amount: Number(product.sale_price) || 0, // แก้เป็น sale_price
-            }
+            ...item,
+            productId: product.id,
+            qty: item.qty || 1,
+            unit: product.unit || item.unit || "",
+            price: Number(product.sale_price) || 0,
+            description: product.name,
+            amount: Number(product.sale_price) || 0, // แก้เป็น sale_price
+          }
           : item
       )
     );
@@ -462,18 +471,23 @@ export default function TaxInvoiceForm({
 
   const handleUpdateItem = (
     id: string,
-    field: "description" | "amount",
+    field: "description" | "amount" | "qty" | "unit" | "price",
     value: string | number
   ) => {
     setItems(
-      items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              [field]: value,
-            }
-          : item
-      )
+      items.map((item) => {
+        if (item.id === id) {
+          const updatedItem = { ...item, [field]: value };
+          // Auto-calculate amount when qty or price changes
+          if (field === "qty" || field === "price") {
+            const qty = field === "qty" ? Number(value) : (item.qty || 1);
+            const price = field === "price" ? Number(value) : (item.price || 0);
+            updatedItem.amount = qty * price;
+          }
+          return updatedItem;
+        }
+        return item;
+      })
     );
   };
 
@@ -624,16 +638,16 @@ export default function TaxInvoiceForm({
         receipt_no: docNumber,
         date: docDate,
 
-        // ข้อมูลลูกค้า (เหมือน quotation)
+        // ข้อมูลลูกค้า (backend expects 'customer' not 'customer_name')
+        customer: selectedCustomer.name, // ✅ Fixed: use 'customer' field
         customer_code: selectedCustomer.code,
-        customer_name: selectedCustomer.name,
         customer_address: selectedCustomer.address,
         customer_tax_id: selectedCustomer.tax_id,
         customer_phone: selectedCustomer.phone,
         customer_email: selectedCustomer.email,
 
         // เอกสารอ้างอิง / การจัดส่ง / ผู้ขาย (เหมือน quotation)
-        reference_doc: selectedDocument,
+        invoice_ref: selectedDocument, // ✅ Fixed: use 'invoice_ref' not 'reference_doc'
         shipping_address: shippingAddress,
         shipping_phone: shippingPhone,
         seller_name: salesperson,
@@ -843,8 +857,8 @@ export default function TaxInvoiceForm({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[600px] p-0">
-                <Command>
+              <PopoverContent className="w-[600px] !p-0 !border !border-gray-300 !shadow-md !rounded-lg">
+                <Command className="!border-0 !rounded-lg overflow-hidden [&_[cmdk-input-wrapper]]:!border-0 [&_[cmdk-input-wrapper]]:!border-b-0">
                   <CommandInput placeholder="ค้นหาลูกค้า..." />
                   <CommandList>
                     <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
@@ -948,6 +962,15 @@ export default function TaxInvoiceForm({
                       ลำดับ (NO)
                     </TableHead>
                     <TableHead>สินค้า</TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      จำนวน (Qty)
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      หน่วย (Unit)
+                    </TableHead>
+                    <TableHead className="w-[120px] text-right">
+                      ราคา/หน่วย
+                    </TableHead>
                     <TableHead className="w-[150px] text-right">
                       ราคารวม (จำนวนเงิน)
                     </TableHead>
@@ -960,7 +983,7 @@ export default function TaxInvoiceForm({
                   {items.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={7}
                         className="py-8 text-center text-gray-400"
                       >
                         ไม่มีรายการ
@@ -972,48 +995,95 @@ export default function TaxInvoiceForm({
                         <TableCell className="text-center">
                           {index + 1}
                         </TableCell>
-                        <TableCell>
-                          <div className="space-y-2">
-                            <Select
-                              value={item.productId?.toString()}
-                              onValueChange={(value) => {
-                                const product = products.find(
-                                  (p) => p.id === parseInt(value)
-                                );
-                                if (product) {
-                                  handleSelectProduct(item.id, product);
-                                }
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="เลือกสินค้า/บริการ..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {products.map((product) => (
-                                  <SelectItem
-                                    key={product.id}
-                                    value={product.id.toString()}
-                                  >
-                                    {product.name} - ฿
-                                    {Number(
-                                      product.sale_price
-                                    ).toLocaleString()}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              value={item.description}
-                              onChange={(e) =>
-                                handleUpdateItem(
-                                  item.id,
-                                  "description",
-                                  e.target.value
-                                )
+                        <TableCell className="space-y-2">
+                          <Select
+                            value={item.productId?.toString()}
+                            onValueChange={(value) => {
+                              const product = products.find(
+                                (p) => p.id === parseInt(value)
+                              );
+                              if (product) {
+                                handleSelectProduct(item.id, product);
                               }
-                              placeholder="หรือพิมพ์รายละเอียดเอง..."
-                            />
-                          </div>
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="เลือกสินค้า/บริการ..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.map((product) => (
+                                <SelectItem
+                                  key={product.id}
+                                  value={product.id.toString()}
+                                >
+                                  {product.name} - ฿
+                                  {Number(
+                                    product.sale_price
+                                  ).toLocaleString()}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={item.description}
+                            onChange={(e) =>
+                              handleUpdateItem(
+                                item.id,
+                                "description",
+                                e.target.value
+                              )
+                            }
+                            placeholder="หรือพิมพ์รายละเอียดเอง..."
+                            className="border-gray-300"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.qty ?? 1}
+                            onChange={(e) =>
+                              handleUpdateItem(
+                                item.id,
+                                "qty",
+                                parseFloat(e.target.value) || 1
+                              )
+                            }
+                            className="text-center"
+                            placeholder="1"
+                            min="0"
+                            step="0.01"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.unit || ""}
+                            onChange={(e) =>
+                              handleUpdateItem(
+                                item.id,
+                                "unit",
+                                e.target.value
+                              )
+                            }
+                            className="text-center"
+                            placeholder="หน่วย"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.price ?? 0}
+                            onChange={(e) =>
+                              handleUpdateItem(
+                                item.id,
+                                "price",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            className="text-right"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                          />
                         </TableCell>
                         <TableCell>
                           <Input
@@ -1028,6 +1098,7 @@ export default function TaxInvoiceForm({
                             }
                             className="text-right"
                             placeholder="0.00"
+                            readOnly
                           />
                         </TableCell>
                         <TableCell className="text-right">
@@ -1172,8 +1243,8 @@ export default function TaxInvoiceForm({
               ยกเลิก
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </CardContent >
+      </Card >
+    </div >
   );
 }

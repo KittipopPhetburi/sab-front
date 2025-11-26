@@ -80,7 +80,15 @@ interface PurchaseOrder {
   shipping_address?: string;
   shipping_phone?: string;
   branch_name?: string;
-  items: string;
+  items: string | Array<{
+    id: string;
+    description: string;
+    qty?: number;
+    unit?: string;
+    price?: number;
+    amount: number;
+    productId?: number;
+  }>;
   notes?: string;
   discount: number;
   vat_rate: number;

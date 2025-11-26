@@ -961,7 +961,6 @@ text-align: center;
   </div>
 </td>
 
-
       </tr>
     </table>
 
@@ -977,32 +976,39 @@ text-align: center;
         </tr>
       </thead>
       <tbody>
-        ${Array.from(
-          { length: ROWS_ON_A4 },
-          (_, i) => `
+        ${paddedItems
+          .map(
+            (i, idx) => `
         <tr>
-          <td class="text-center">${i === 0 ? "1" : ""}</td>
+          <td class="text-center">${
+            i.id.startsWith("empty-") ? "" : idx + 1
+          }</td>
           <td style="max-width: 300px;">${
-            i === 0 ? cleanDescription(item.description) : ""
+            i.id.startsWith("empty-") ? "" : i.description || "-"
           }</td>
-          <td class="text-center">${i === 0 ? "1" : ""}</td>
-          <td class="text-center">${i === 0 ? "" : ""}</td>
-          <td class="text-right">${
-            i === 0
-              ? subtotal.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })
-              : ""
+          <td class="text-center">${
+            i.id.startsWith("empty-") ? "" : i.qty || 1
+          }</td>
+          <td class="text-center">${
+            i.id.startsWith("empty-") ? "" : i.unit || ""
           }</td>
           <td class="text-right">${
-            i === 0
-              ? subtotal.toLocaleString(undefined, {
+            i.id.startsWith("empty-")
+              ? ""
+              : (i.price || 0).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                 })
-              : ""
+          }</td>
+          <td class="text-right">${
+            i.id.startsWith("empty-")
+              ? ""
+              : (i.amount || 0).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })
           }</td>
         </tr>`
-        ).join("")}
+          )
+          .join("")}
       </tbody>
       <tfoot class="summary-footer">
   <!-- แถวเดียว: ซ้าย = หมายเหตุ/การชำระเงิน, ขวา = สรุปตัวเลข -->
