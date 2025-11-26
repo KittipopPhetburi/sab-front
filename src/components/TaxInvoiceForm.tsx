@@ -390,6 +390,33 @@ export default function TaxInvoiceForm({
     if ((editData as any).vat_rate !== undefined)
       setVatRate(Number((editData as any).vat_rate));
 
+    // โหลด items จาก editData (อาจเป็น string JSON หรือ array)
+    if ((editData as any).items) {
+      try {
+        let parsedItems: InvoiceItem[] = [];
+        const itemsData = (editData as any).items;
+        
+        if (typeof itemsData === 'string') {
+          // Parse JSON string
+          parsedItems = JSON.parse(itemsData);
+        } else if (Array.isArray(itemsData)) {
+          // Already an array
+          parsedItems = itemsData;
+        }
+        
+        if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+          setItems(parsedItems);
+        }
+      } catch (error) {
+        console.error("Failed to parse items from editData:", error);
+      }
+    }
+
+    // โหลดส่วนลดถ้ามี
+    if ((editData as any).discount !== undefined) {
+      setDiscount(Number((editData as any).discount));
+    }
+
     // หากลูกค้าไม่พบในรายการ (เช่น ข้อมูลใบเสร็จเก่า) ให้ตั้งค่า fallback customer โดยไม่ทำให้ type ผิด
     if (!customers?.length) return;
     // หากมีค่า customer (เป็นชื่อ) ให้ค้นหา customer ที่มีชื่อนั้น
@@ -1045,7 +1072,7 @@ export default function TaxInvoiceForm({
                               handleUpdateItem(
                                 item.id,
                                 "qty",
-                                parseFloat(e.target.value) || 1
+                                parseInt(e.target.value) || 1
                               )
                             }
                             className="text-center"
