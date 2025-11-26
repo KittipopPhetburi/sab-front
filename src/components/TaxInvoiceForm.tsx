@@ -617,27 +617,52 @@ export default function TaxInvoiceForm({
         expected_delivery_date: null,
         doc_type: docCopyType, // เพิ่มประเภทเอกสาร (original/copy)
       };
-    } else {
-      // payload สำหรับ receipts API
-      // Note: ส่งเฉพาะ fields ที่ backend รองรับ - อาจต้องปรับตามโครงสร้าง backend จริง
+    } else if (documentType === "receipt") {
+      // ✅ payload สำหรับ receipts API ให้โครงเหมือน quotation
       payload = {
+        // ต่างจาก quotation แค่ชื่อเลขที่เอกสาร
         receipt_no: docNumber,
         date: docDate,
-        customer: selectedCustomer.name,
+
+        // ข้อมูลลูกค้า (เหมือน quotation)
+        customer_code: selectedCustomer.code,
+        customer_name: selectedCustomer.name,
         customer_address: selectedCustomer.address,
         customer_tax_id: selectedCustomer.tax_id,
         customer_phone: selectedCustomer.phone,
         customer_email: selectedCustomer.email,
-        customer_branch_name:
-          customerBranchName || selectedCustomer.branch_name,
+
+        // เอกสารอ้างอิง / การจัดส่ง / ผู้ขาย (เหมือน quotation)
+        reference_doc: selectedDocument,
+        shipping_address: shippingAddress,
+        shipping_phone: shippingPhone,
         seller_name: salesperson,
         salesperson: salesperson,
-        invoice_ref: selectedDocument || "-",
-        amount: calculateGrandTotal() || 0,
+        branch_name: selectedCustomer.branch_name,
+        customer_branch_name:
+          customerBranchName || selectedCustomer.branch_name,
+
+        // รายการ + ยอดคำนวณ (เหมือน quotation)
+        items: JSON.stringify(items),
+        notes,
+        discount,
+        vat_rate: vatRate,
+        subtotal: calculateSubtotal(),
+        discount_amount: calculateDiscountAmount(),
+        after_discount: calculateAfterDiscount(),
+        vat: calculateVat(),
+        grand_total: calculateGrandTotal(),
+
+        // ถ้า table receipts มี field amount อยู่แล้ว ก็ให้เก็บยอดรวมซ้ำอีกช่อง
+        amount: calculateGrandTotal(),
+
         status: "ร่าง",
-        description: notes || undefined,
+        // ถ้าใบเสร็จไม่มี valid_until ก็ไม่ต้องใส่
         doc_type: docCopyType,
       };
+    } else {
+      // กันกรณีหลุด type เฉย ๆ
+      payload = {};
     }
 
     try {

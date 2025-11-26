@@ -60,6 +60,8 @@ import {
   type CompanySetting,
 } from "../../services/companySettingService";
 import { customerService } from "../../services/customerService";
+import ThaiBahtText from "thai-baht-text";
+
 
 interface ReceiptPageProps {
   userRole: UserRole;
@@ -83,6 +85,13 @@ interface Receipt {
   seller_name?: string;
   salesperson?: string;
   customer_branch_name?: string;
+  discount?: number;
+  vat_rate?: number;
+  subtotal?: number;
+  discount_amount?: number;
+  after_discount?: number;
+  vat?: number;
+  grand_total?: number;
 }
 
 const API_URL = "http://127.0.0.1:8000/api/receipts";
@@ -124,6 +133,7 @@ export default function ReceiptPage({ userRole }: ReceiptPageProps) {
     invoiceNo: "",
     amount: "",
     description: "",
+    
   });
 
   const canEdit = userRole === "admin" || userRole === "account";
@@ -372,6 +382,8 @@ export default function ReceiptPage({ userRole }: ReceiptPageProps) {
     }
   };
 
+  
+
   const handleView = async (item: Receipt) => {
     let out = item;
     if (!item.customer_branch_name) {
@@ -474,7 +486,22 @@ export default function ReceiptPage({ userRole }: ReceiptPageProps) {
     };
 
     const logoUrl = resolveLogoUrl(companySetting?.logo);
-    const totalAmount = Number(item.amount || 0);
+
+// ดึงค่าจาก payload receipt (มี fallback เผื่อใบเก่าเก็บแค่ amount)
+const grandTotal = Number(
+  item.grand_total ?? item.amount ?? 0
+);
+const subtotal = Number(item.subtotal ?? grandTotal);
+const discountAmount = Number(item.discount_amount ?? 0);
+const afterDiscount = Number(
+  item.after_discount ?? subtotal - discountAmount
+);
+const vatRate = Number(item.vat_rate ?? 7);
+const vatAmount = Number(
+  item.vat ?? (afterDiscount * vatRate) / 100
+);
+
+    
 
     // Clean description - remove if corrupted or use default
     const cleanDescription = (desc: string | undefined) => {
@@ -929,7 +956,7 @@ text-align: center;
       item.invoice_ref || ""
     }</span>
     <span class="k">พนักงานขาย</span><span class="sep">:</span><span class="v">${
-      item.seller_name || (companySetting as any)?.seller || ""
+      item.seller_name || ""
     }</span>
   </div>
 </td>
@@ -962,14 +989,14 @@ text-align: center;
           <td class="text-center">${i === 0 ? "" : ""}</td>
           <td class="text-right">${
             i === 0
-              ? totalAmount.toLocaleString(undefined, {
+              ? subtotal.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                 })
               : ""
           }</td>
           <td class="text-right">${
             i === 0
-              ? totalAmount.toLocaleString(undefined, {
+              ? subtotal.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                 })
               : ""
@@ -1010,7 +1037,22 @@ text-align: center;
     </td>
     <td class="sum-values">
       <!-- ใส่ตัวเลขจริงของคุณตรงนี้ ถ้าต้องการ -->
-      <br/><br/><br/><br/>
+  ${subtotal.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+  })}<br/>
+  ${discountAmount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+  })}<br/>
+  ${afterDiscount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+  })}<br/>
+  ${vatAmount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+  })}
+</td>
+
+              
+
     </td>
   </tr>
 
@@ -1018,12 +1060,11 @@ text-align: center;
 <tr class="total-row">
   <td colspan="4" style="padding:6px 8px;">
   <div class="line">
-    <span>จำนวนเงินเป็นตัวอักษร</span>
-    <span>(</span><span class="dot"></span><span>)</span>
+    <span>จำนวนเงินเป็นตัวอักษร (${ThaiBahtText(grandTotal)})</span>
   </div>
 </td>
   <td class="sum-labels">จำนวนเงินรวมทั้งสิ้น</td>
-  <td class="sum-values">${totalAmount.toLocaleString(undefined, {
+  <td class="sum-values">${grandTotal.toLocaleString(undefined, {
     minimumFractionDigits: 2,
   })}</td>
 </tr>

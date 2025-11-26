@@ -853,7 +853,7 @@ ${
     
         <tr>
             <td colspan="3" style="text-align: left;">
-                จำนวนเงินเป็นตัวอักษร ${ThaiBahtText(grand_total)}
+                จำนวนเงินเป็นตัวอักษร (${ThaiBahtText(grand_total)})
             </td> 
     
             <td colspan="2" style="text-align: right; padding-right: 5px;">

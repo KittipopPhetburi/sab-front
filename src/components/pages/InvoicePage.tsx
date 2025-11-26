@@ -60,6 +60,8 @@ import {
   type CompanySetting,
 } from "../../services/companySettingService";
 import { customerService } from "../../services/customerService";
+import ThaiBahtText from "thai-baht-text";
+
 
 interface InvoicePageProps {
   userRole: UserRole;
@@ -957,31 +959,31 @@ export default function InvoicePage({ userRole }: InvoicePageProps) {
                     ภาษีมูลค่าเพิ่ม VAT 7%
                   </td>
                   <td colspan="1" style="text-align: right; padding-right: 5px;">
-                    <b>${item.subtotal.toLocaleString(undefined, {
+                    ${item.subtotal.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}</b><br/>
-                    <b>${item.discount_amount.toLocaleString(undefined, {
+                    })}<br/>
+                    ${item.discount_amount.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}</b><br/>
-                    <b>${item.after_discount.toLocaleString(undefined, {
+                    })}<br/>
+                    ${item.after_discount.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}</b><br/>
-                    <b>${item.vat.toLocaleString(undefined, {
+                    })}<br/>
+                    ${item.vat.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}</b>
+                    })}
                   </td>
                 </tr>
                 <tr>
                   <td colspan="3" style="text-align: left;">
-                    <b>จำนวนเงินเป็นตัวอักษร (..................................................)</b>
+                    จำนวนเงินเป็นตัวอักษร (${ThaiBahtText(item.grand_total)})
                   </td>
                   <td colspan="2" style="text-align: right; padding-right: 5px;">
-                    <b>จำนวนเงินรวมทั้งสิ้น</b>
+                    จำนวนเงินรวมทั้งสิ้น
                   </td>
                   <td colspan="1" style="text-align: right; padding-right: 5px;">
-                    <b>${item.grand_total.toLocaleString(undefined, {
+                    ${item.grand_total.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}</b>
+                    })}
                   </td>
                 </tr>
               </tfoot>
