@@ -33,6 +33,23 @@ interface Receipt {
   customer_branch_name?: string;
   description?: string;
   doc_type?: "original" | "copy";
+  items?:
+    | string
+    | Array<{
+        id: string;
+        description: string;
+        qty?: number;
+        unit?: string;
+        price?: number;
+        amount: number;
+      }>;
+  subtotal?: number;
+  discount?: number;
+  discount_amount?: number;
+  after_discount?: number;
+  vat_rate?: number;
+  vat?: number;
+  grand_total?: number;
 }
 
 export default function ReceiptDetailPage({
@@ -46,6 +63,33 @@ export default function ReceiptDetailPage({
   const receiptDateFormatted = new Date(receipt.date).toLocaleDateString(
     "th-TH"
   );
+
+  // Parse items from receipt data
+  let receiptItems: Array<{
+    id: string;
+    description: string;
+    qty?: number;
+    unit?: string;
+    price?: number;
+    amount: number;
+  }> = [];
+
+  try {
+    if (receipt.items && typeof receipt.items === "string") {
+      receiptItems = JSON.parse(receipt.items);
+    } else if (Array.isArray(receipt.items)) {
+      receiptItems = receipt.items;
+    }
+  } catch (e) {
+    console.error("Failed to parse receipt items:", e);
+  }
+
+  // Use calculated values from receipt or fallback to amount
+  const subtotal = receipt.subtotal ?? receipt.amount;
+  const discountAmount = receipt.discount_amount ?? 0;
+  const afterDiscount = receipt.after_discount ?? subtotal - discountAmount;
+  const vatAmount = receipt.vat ?? 0;
+  const grandTotal = receipt.grand_total ?? receipt.amount;
 
   return (
     <div className="receipt-detail">
@@ -124,23 +168,41 @@ export default function ReceiptDetailPage({
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="col-no receipt-text-center">1</td>
-                  <td className="col-desc">
-                    {receipt.description ||
-                      `รับชำระเงินตามใบแจ้งหนี้เลขที่ ${
-                        receipt.invoice_ref || "-"
-                      }`}
-                  </td>
-                  <td className="col-qty receipt-text-center">1</td>
-                  <td className="col-unit receipt-text-center">-</td>
-                  <td className="col-price receipt-text-right">
-                    {formatAmount(receipt.amount)}
-                  </td>
-                  <td className="col-amount receipt-text-right">
-                    {formatAmount(receipt.amount)}
-                  </td>
-                </tr>
+                {receiptItems.length > 0 ? (
+                  receiptItems.map((item, index) => (
+                    <tr key={item.id}>
+                      <td className="col-no receipt-text-center">{index + 1}</td>
+                      <td className="col-desc">{item.description}</td>
+                      <td className="col-qty receipt-text-center">{item.qty || 1}</td>
+                      <td className="col-unit receipt-text-center">{item.unit || "-"}</td>
+                      <td className="col-price receipt-text-right">
+                        {formatAmount(item.price || 0)}
+                      </td>
+                      <td className="col-amount receipt-text-right">
+                        {formatAmount(item.amount)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="col-no receipt-text-center">1</td>
+                    <td className="col-desc">
+                      {receipt.description ||
+                        `รับชำระเงินตามใบแจ้งหนี้เลขที่ ${
+                          receipt.invoice_ref || "-"
+                        }`}
+                    </td>
+                    <td className="col-qty receipt-text-center">1</td>
+                    <td className="col-unit receipt-text-center">-</td>
+                    <td className="col-price receipt-text-right">
+                      {formatAmount(receipt.amount)}
+                    </td>
+                    <td className="col-amount receipt-text-right">
+                      {formatAmount(receipt.amount)}
+                    </td>
+                  </tr>
+                )}
+                
                 {/* Empty rows for spacing */}
                 {Array.from({ length: 12 }, (_, i) => (
                   <tr key={`empty-${i}`}>
@@ -164,37 +226,37 @@ export default function ReceiptDetailPage({
               <div className="pos-total-row">
                 <div className="pos-total-label">รวมเป็นเงิน</div>
                 <div className="pos-total-value">
-                  {formatAmount(receipt.amount)}
+                  {formatAmount(subtotal)}
                 </div>
               </div>
 
               <div className="pos-total-row">
                 <div className="pos-total-label">ส่วนลด</div>
-                <div className="pos-total-value">0.00</div>
+                <div className="pos-total-value">{formatAmount(discountAmount)}</div>
               </div>
 
               <div className="pos-total-row">
                 <div className="pos-total-label">ราคาหลังหักส่วนลด</div>
                 <div className="pos-total-value">
-                  {formatAmount(receipt.amount)}
+                  {formatAmount(afterDiscount)}
                 </div>
               </div>
 
               <div className="pos-total-row">
                 <div className="pos-total-label">ภาษีมูลค่าเพิ่ม VAT 7%</div>
-                <div className="pos-total-value">0.00</div>
+                <div className="pos-total-value">{formatAmount(vatAmount)}</div>
               </div>
             </div>
 
             {/* Grand total split into two elements */}
             <div className="pos-grand-label">รวมราคาทั้งสิ้น</div>
             <div className="pos-grand-value">
-              {formatAmount(receipt.amount)}
+              {formatAmount(grandTotal)}
             </div>
 
             {/* Grand total in words */}
             <div className="pos-grand-text">
-              <strong>({ThaiBahtText(receipt.amount)})</strong>
+              <strong>({ThaiBahtText(grandTotal)})</strong>
             </div>
 
             {/* ===== FOOTER SECTION =====

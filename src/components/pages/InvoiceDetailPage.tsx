@@ -217,12 +217,12 @@ export default function InvoiceDetailPage({
                       {item.id.startsWith("empty-") ? "" : item.qty || 1}
                     </td>
                     <td className="col-unit invoice-text-center">
-                      {item.id.startsWith("empty-") ? "" : item.unit || "งวด"}
+                      {item.id.startsWith("empty-") ? "" : item.unit || "-"}
                     </td>
                     <td className="col-price invoice-text-right">
                       {item.id.startsWith("empty-")
                         ? ""
-                        : Number(item.amount || 0).toLocaleString()}
+                        : Number(item.price || 0).toLocaleString()}
                     </td>
                     <td
                       className="col-amount invoice-text-right"
